@@ -82,7 +82,7 @@ def gather_to_cc_bcc_email_recipients(actual_recipients: list, actual_cc: list, 
         query = '(T)o, (C)c, (B)cc, (S)kip'
         recipient_type_choices = ('T', 'C', 'B', 'S')
         
-    to_choice = choices[0]
+    to_choice = recipient_type_choices[0]
     
     choice_to_list_dict = {
         to_choice: actual_recipients,
@@ -105,6 +105,9 @@ def gather_to_cc_bcc_email_recipients(actual_recipients: list, actual_cc: list, 
             query,
             recipient_type_choices
         )
+
+        if recipient_type_input_validated == 'S':
+            continue
         
         applicable_email_address_list = choice_to_list_dict[recipient_type_input_validated]
         
@@ -277,5 +280,3 @@ if __name__ == "__main__":
         read_new_messages()
     elif operation == 'W':
         write_email()
-
-
