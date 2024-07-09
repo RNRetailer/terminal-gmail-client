@@ -139,7 +139,7 @@ def connect():
     service.local_oauth()
 
     client = google_workspace.gmail.GmailClient(service=service)
-    print(f'Fetching unread emails for {client.email_address}')
+    print(f'Logged in to GMail as {client.email_address}')
     return client
 
 gmail_client = connect()
