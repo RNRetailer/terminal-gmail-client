@@ -14,7 +14,7 @@ print('\x1b[8;{0};{1}t'.format(rows, cols), end='', flush=True)
 EMAIL_VALIDATION_REGEX = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
 
 def pprint(text):
-    cprint(text, "black", "on_white", attrs=[])
+    cprint(text, "black", "on_white")
 
 print = pprint
 
