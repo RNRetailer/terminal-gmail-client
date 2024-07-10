@@ -164,6 +164,8 @@ gmail_client = connect()
 
 # EMAIL READING / WRITING FUNCTIONS
 
+textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
+is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
 
 def read_new_messages():
     """
@@ -189,6 +191,15 @@ def read_new_messages():
 
             for line in message_text.split('\n'):
                 print(line)
+
+            for attachment in message.attachments:
+                content = attachment.payload
+
+                if is_binary_string(content):
+                    continue
+
+                for line in content.decode('utf8').split('\n'):
+                    print(line)
 
         elif user_input_validated == 'M':
             message.mark_read()
