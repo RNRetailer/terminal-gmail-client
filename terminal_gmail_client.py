@@ -172,7 +172,7 @@ def read_new_messages():
 
     for message in gmail_client.get_messages(seen=False):
         print('----------------------------------------')
-        print(message.date.strftime('%x %-H:%-M'))
+        print(message.date.strftime('%x %-H:%-M UTC'))
         print(f'From: {message.from_}')
         print(f"To: {', '.join(message.to)}")
         print(f"CC: {', '.join(message.cc)}")
