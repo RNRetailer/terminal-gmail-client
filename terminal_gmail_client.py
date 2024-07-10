@@ -396,10 +396,10 @@ def read_new_messages():
                         print(f'Can\'t print attachment #{one_index} with filename "{filename}" because it is a binary file')
                         continue
                         
-                    should_display = ask_for_user_input(f'Do you want to (D)isplay or (S)kip attachment #{one_index} with filename "{filename}"', ('D', 'S'))
+                    should_display = ask_for_user_input(f'Do you want to (P)rint or (S)kip attachment #{one_index} with filename "{filename}"', ('P', 'S'))
                         
-                    if should_display == 'D':
-                        print(f'--- Displaying Attachment #{one_index} with filename "{filename}" ---')
+                    if should_display == 'P':
+                        print(f'--- Printing Attachment #{one_index} with filename "{filename}" ---')
                             
                         for line in content.decode('utf8').split('\n'):
                             print(line)
