@@ -4,7 +4,7 @@ import editor
 from typing import Iterable
 import sys
 from termcolor import cprint
-
+import os
 
 # set terminal size
 rows = 32
@@ -130,6 +130,30 @@ def gather_to_cc_bcc_email_recipients(actual_recipients: list, actual_cc: list, 
             continue
             
         applicable_email_address_list.append(user_input_email)
+        
+        
+ def add_attachments():
+    attachments = []
+
+    while True:
+        print('Please enter the filename of your attachment or press Enter if you have nothing to attach')
+        
+        filepath = input().strip()
+        
+        if not filepath:
+            break
+            
+        if not os.path.isfile(filepath):
+            print('Invalid filename, failed to attach the file.')
+            continue
+            
+        if filepath in attachments:
+            print('You already attached this file. Skipping.')
+            continue
+            
+        attachments.append(filepath)
+        
+    return attachments
 
 def accept_any_input(prompt: str):
     """
@@ -247,7 +271,9 @@ def read_new_messages():
                 
             reply_body = ask_for_non_blank_user_input('Type your reply:', True)
 
-            reply_body, _ = google_workspace.gmail.utils.create_replied_message(message, reply_body, None)      
+            reply_body, _ = google_workspace.gmail.utils.create_replied_message(message, reply_body, None)
+
+            attachments = add_attachments()            
 
             gmail_client.send_message(
                 to=actual_recipients,
@@ -257,6 +283,7 @@ def read_new_messages():
                 text=reply_body,
                 in_reply_to=message.message_id,
                 thread_id=message.thread_id,
+                attachments=attachments,
             )             
 
             message.mark_read()
@@ -281,6 +308,8 @@ def write_email():
         actual_cc,
         actual_bcc
     )
+        
+    attachments = add_attachments()
 
     gmail_client.send_message(
         to=actual_recipients,
@@ -288,6 +317,7 @@ def write_email():
         bcc=actual_bcc,
         subject=subject,
         text=body,
+        attachments=attachments,
     )
 
 ##############################################################################################################################################
