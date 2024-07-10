@@ -2,8 +2,21 @@ import google_workspace
 import re
 import editor
 from typing import Iterable
+import sys
+from termcolor import cprint
+
+
+# set terminal size
+rows = 32
+cols = 64
+print('\x1b[8;{0};{1}t'.format(rows, cols), end='', flush=True)
 
 EMAIL_VALIDATION_REGEX = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
+
+def pprint(text):
+    cprint(text, "black", "on_white", attrs=[])
+
+print = pprint
 
 ##############################################################################################################################################
 
@@ -172,7 +185,7 @@ def read_new_messages():
         )
 
         if user_input_validated == 'R':
-            message_text = message.html_text if message.html_text else message.text
+            message_text = message.text if message.text else message.html_text
 
             for line in message_text.split('\n'):
                 print(line)
