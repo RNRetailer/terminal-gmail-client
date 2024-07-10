@@ -132,7 +132,7 @@ def gather_to_cc_bcc_email_recipients(actual_recipients: list, actual_cc: list, 
         applicable_email_address_list.append(user_input_email)
         
         
- def add_attachments():
+def add_attachments():
     attachments = []
 
     while True:
