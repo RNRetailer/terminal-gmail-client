@@ -10,4 +10,5 @@
  Then, just follow the instructions in the terminal.\
  You can safely close the terminal window whenver you want.\
  The program will exit once it completes the task you've selected.\
- So, you must run it every time you want to check your unread mail or write an email.
+ So, you must run it every time you want to check your unread mail or write an email.\
+ Check out our paid edition here: https://terminalwebmail.com/
