@@ -8,15 +8,28 @@ import os
 import errno
 import tempfile
 
+##############################################################################################################################################
+
+# CONFIG
+
+# set terminal size
+TERMINAL_ROWS = 32
+TERMINAL_COLS = 64
+
+# set number of characters at which an email is considered long
+LONG_PRINTED_STRING_MINIMUM_LENGTH = 5000
+
+##############################################################################################################################################
+
+# magic number
 ERROR_INVALID_NAME = 123
 
 # set terminal size
-rows = 32
-cols = 64
-print('\x1b[8;{0};{1}t'.format(rows, cols), end='', flush=True)
+print('\x1b[8;{0};{1}t'.format(TERMINAL_ROWS, TERMINAL_COLS), end='', flush=True)
 
 EMAIL_VALIDATION_REGEX = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
 
+# pretty print
 def pprint(text):
     cprint(text, "black", "on_white")
 
@@ -165,6 +178,35 @@ def accept_any_input(prompt: str):
     """
     print(prompt)
     return input()
+    
+def ask_for_integer_input(prompt: str, maximum: int, minimum: int = 0, maximum_on_blank: bool = True):
+    """
+        Gets user input from the terminal and checks if it is an integer in the correct range
+    """
+
+    while True:
+        print(prompt)
+
+        user_input = input().strip()
+        
+        if not user_input:
+            return maximum
+            
+        try:
+            user_input = int(user_input)
+         except ValueError:
+             print('Incorrect value. Please enter an integer.')
+             continue
+             
+         if user_input < minimum:
+             print(f'Value must be at least {minimum}')
+             continue
+             
+        if user_input > maximum:
+            print(f'Value must be at most {maximum}')
+            continue
+            
+        return user_input
     
 # below from https://stackoverflow.com/questions/9532499/check-whether-a-path-is-valid-in-python-without-creating-a-file-at-the-paths-ta
 # /start 
@@ -373,8 +415,18 @@ def read_new_messages():
 
         if user_input_validated == 'R':
             message_text = message.text if message.text else message.html_text
+            
+            message_length = len(message_text)
+            
+            if message_length >= LONG_PRINTED_STRING_MINIMUM_LENGTH:
+                length_to_print = ask_for_integer_input(
+                    f'This message is long at {message_length} characters. It might be a long reply chain. How many characters do you want to see (taken from the beginning)? Press enter to see them all.',
+                    message_length
+                )
+            else:
+                length_to_print = message_length
 
-            for line in message_text.split('\n'):
+            for line in message_text[:length_to_print].split('\n'):
                 print(line)
                 
             if len(message.attachments):
@@ -399,9 +451,21 @@ def read_new_messages():
                     should_display = ask_for_user_input(f'Do you want to (P)rint or (S)kip attachment #{one_index} with filename "{filename}"', ('P', 'S'))
                         
                     if should_display == 'P':
+                        attachment_content = content.decode('utf8')
+                    
+                        attachment_length = len(attachment_content)
+
+                        if attachment_length >= LONG_PRINTED_STRING_MINIMUM_LENGTH:
+                            length_to_print = ask_for_integer_input(
+                                f'This attachment is long at {attachment_length} characters. It might be a long reply chain. How many characters do you want to see (taken from the beginning)? Press enter to see them all.',
+                                attachment_length
+                            )
+                        else:
+                            length_to_print = attachment_length                   
+                    
                         print(f'--- Printing Attachment #{one_index} with filename "{filename}" ---')
                             
-                        for line in content.decode('utf8').split('\n'):
+                        for line in attachment_content[:length_to_print].split('\n'):
                             print(line)
 
         elif user_input_validated == 'M':
