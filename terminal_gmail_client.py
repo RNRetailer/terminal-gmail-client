@@ -437,7 +437,7 @@ def display_if_image(image_file_path):
         
     try:
         subprocess.call(
-            f'~/.cargo/bin/viu {image_file_path}',
+            f'~/.cargo/bin/viu "{image_file_path}"',
             shell=True
         )
     except KeyboardInterrupt:
