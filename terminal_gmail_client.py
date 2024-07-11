@@ -13,7 +13,7 @@ from PIL import UnidentifiedImageError
 import re
 import uuid
 import shutil
-from tempfile import NamedTemporaryFile
+import io
 
 ##############################################################################################################################################
 
@@ -421,12 +421,16 @@ def is_filename_an_image(attachment_file_path):
         return False
 
 def is_attachment_an_image(attachment):
-    f = NamedTemporaryFile()
-    f.write(attachment.payload)
-    f.seek(0)
-
-    return is_filename_an_image(f.name)
-
+    try:
+        Image.open(
+            io.BytesIO(
+                attachment.payload
+            )
+        )
+        return True
+    except UnidentifiedImageError:
+        return False
+    
 def display_if_image(image_file_path):
     if not is_filename_an_image(image_file_path):
         return
