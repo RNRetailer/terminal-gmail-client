@@ -434,11 +434,14 @@ def is_attachment_an_image(attachment):
 def display_if_image(image_file_path):
     if not is_filename_an_image(image_file_path):
         return
-
-    subprocess.call(
-        f'~/.cargo/bin/viu {image_file_path}',
-        shell=True
-    )
+        
+    try:
+        subprocess.call(
+            f'~/.cargo/bin/viu {image_file_path}',
+            shell=True
+        )
+    except KeyboardInterrupt:
+        pass
 
 def display_inline_image(attachment_filename, attachments):
     for attachment in attachments:
