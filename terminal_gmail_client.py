@@ -7,6 +7,13 @@ from termcolor import cprint
 import os
 import errno
 import tempfile
+import subprocess
+from PIL import Image
+from PIL import UnidentifiedImageError
+import re
+import uuid
+import shutil
+from tempfile import NamedTemporaryFile
 
 ##############################################################################################################################################
 
@@ -350,7 +357,7 @@ def is_path_exists_or_creatable_portable(pathname: str) -> bool:
         
 # /end
     
-def get_valid_filepath(prompt: str):
+def get_valid_filepath(prompt: str, return_on_blank: bool = True):
     """
         Get vaild filename from user
     """    
@@ -358,6 +365,9 @@ def get_valid_filepath(prompt: str):
         print(prompt)
             
         filepath = input().strip()
+
+        if return_on_blank and not filepath:
+            return
         
         if not is_path_exists_or_creatable_portable(filepath):
             print('That is not a valid path. Try again.')
@@ -393,6 +403,53 @@ gmail_client = connect()
 
 textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
 is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
+inline_image_regex = re.compile(r"\[image: .*\]")
+
+def make_sure_images_are_on_seperate_lines(message_content):
+    image_tags = inline_image_regex.findall(message_content)
+
+    for image_tag in image_tags:
+        message_content = message_content.replace(image_tag, f'\n{image_tag}\n')
+
+    return message_content
+
+def is_filename_an_image(attachment_file_path):
+    try:
+        Image.open(attachment_file_path)
+        return True
+    except UnidentifiedImageError:
+        return False
+
+def is_attachment_an_image(attachment):
+    f = NamedTemporaryFile()
+    f.write(attachment.payload)
+    f.seek(0)
+
+    return is_filename_an_image(f.name)
+
+def display_if_image(image_file_path):
+    if not is_filename_an_image(image_file_path):
+        return
+
+    subprocess.call(
+        f'~/.cargo/bin/viu {image_file_path}',
+        shell=True
+    )
+
+def display_inline_image(attachment_filename, attachments):
+    for attachment in attachments:
+        if attachment.filename == attachment_filename:
+            return display_attachment(attachment)
+
+def display_attachment(attachment, downloaded_attachment_location_map=None):
+    if downloaded_attachment_location_map and attachment.filename in downloaded_attachment_location_map:
+        filepath = downloaded_attachment_location_map[attachment.filename]
+    else:
+        filepath = str(uuid.uuid4())
+        attachment.download(filepath)
+
+    display_if_image(filepath)
+    return filepath
 
 def read_new_messages():
     """
@@ -413,6 +470,8 @@ def read_new_messages():
             ('R', 'M', 'S')
         )
 
+        downloaded_attachment_location_map = {}
+
         if user_input_validated == 'R':
             message_text = message.text if message.text else message.html_text
             
@@ -426,8 +485,15 @@ def read_new_messages():
             else:
                 length_to_print = message_length
 
-            for line in message_text[:length_to_print].split('\n'):
-                print(line)
+            text_to_print = make_sure_images_are_on_seperate_lines(message_text[:length_to_print])
+
+            for line in text_to_print.split('\n'):
+                if inline_image_regex.findall(line):
+                    attachment_filename = line.split(' ')[-1][:-1]
+                    temp_filename = display_inline_image(attachment_filename, message.attachments)
+                    downloaded_attachment_location_map[attachment_filename] = temp_filename
+                else:
+                    print(line)
                 
             if len(message.attachments):
                 print('---- Attachments ----')
@@ -439,34 +505,49 @@ def read_new_messages():
                     one_index = index + 1
                     
                     should_download = ask_for_user_input(f'Do you want to (D)ownload or (S)kip attachment #{one_index} with filename "{filename}"', ('D', 'S'))
+
+                    default_download_location = filename if filename else f'attachment-{index}'
                     
                     if should_download == 'D':
-                        filepath = get_valid_filepath('Please enter the path you want to download this file to:')
-                        attachment.download(filepath)
+                        requested_filepath = get_valid_filepath(f'Please enter the path you want to download this file to. Press Enter for {default_download_location}')
 
-                    if is_binary_string(content):
+                        requested_filepath = requested_filepath if requested_filepath else default_download_location
+
+                        if filename in downloaded_attachment_location_map:
+                            original_file_location = downloaded_attachment_location_map[filename]
+                            shutil.move(original_file_location, requested_filepath)
+                            downloaded_attachment_location_map[filename] = requested_filepath
+                        else:
+                            attachment.download(requested_filepath)
+
+                    attachment_is_image = is_attachment_an_image(attachment)
+
+                    if is_binary_string(content) and not attachment_is_image:
                         print(f'Can\'t print attachment #{one_index} with filename "{filename}" because it is a binary file')
                         continue
                         
                     should_display = ask_for_user_input(f'Do you want to (P)rint or (S)kip attachment #{one_index} with filename "{filename}"', ('P', 'S'))
                         
                     if should_display == 'P':
-                        attachment_content = content.decode('utf8')
-                    
-                        attachment_length = len(attachment_content)
-
-                        if attachment_length >= LONG_PRINTED_STRING_MINIMUM_LENGTH:
-                            length_to_print = ask_for_integer_input(
-                                f'This attachment is long at {attachment_length} characters. It might be a long reply chain. How many characters do you want to see (taken from the beginning)? Press enter to see them all.',
-                                attachment_length
-                            )
+                        if attachment_is_image:
+                            display_attachment(attachment, downloaded_attachment_location_map)
                         else:
-                            length_to_print = attachment_length                   
-                    
-                        print(f'--- Printing Attachment #{one_index} with filename "{filename}" ---')
-                            
-                        for line in attachment_content[:length_to_print].split('\n'):
-                            print(line)
+                            attachment_content = content.decode('utf8')
+
+                            attachment_length = len(attachment_content)
+
+                            if attachment_length >= LONG_PRINTED_STRING_MINIMUM_LENGTH:
+                                length_to_print = ask_for_integer_input(
+                                    f'This attachment is long at {attachment_length} characters. It might be a long reply chain. How many characters do you want to see (taken from the beginning)? Press enter to see them all.',
+                                    attachment_length
+                                )
+                            else:
+                                length_to_print = attachment_length
+
+                            print(f'--- Printing Attachment #{one_index} with filename "{filename}" ---')
+
+                            for line in attachment_content[:length_to_print].split('\n'):
+                                print(line)
 
         elif user_input_validated == 'M':
             message.mark_read()
