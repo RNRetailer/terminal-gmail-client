@@ -194,13 +194,13 @@ def ask_for_integer_input(prompt: str, maximum: int, minimum: int = 0, maximum_o
             
         try:
             user_input = int(user_input)
-         except ValueError:
-             print('Incorrect value. Please enter an integer.')
-             continue
+        except ValueError:
+            print('Incorrect value. Please enter an integer.')
+            continue
              
-         if user_input < minimum:
-             print(f'Value must be at least {minimum}')
-             continue
+        if user_input < minimum:
+            print(f'Value must be at least {minimum}')
+            continue
              
         if user_input > maximum:
             print(f'Value must be at most {maximum}')
