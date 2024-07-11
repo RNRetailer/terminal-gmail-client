@@ -10,7 +10,6 @@ import tempfile
 import subprocess
 from PIL import Image
 from PIL import UnidentifiedImageError
-import re
 import uuid
 import shutil
 import io
@@ -403,10 +402,11 @@ gmail_client = connect()
 
 textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
 is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
-inline_image_regex = re.compile(r"\[image: .*\]")
+inline_image_regex_gmail = re.compile(r"\[image: .*\]")
+inline_image_regex_outlook = re.compile(r"\[cid:.*\]")
 
 def make_sure_images_are_on_seperate_lines(message_content):
-    image_tags = inline_image_regex.findall(message_content)
+    image_tags = inline_image_regex_gmail.findall(message_content) + inline_image_regex_outlook.findall(message_content)
 
     for image_tag in image_tags:
         message_content = message_content.replace(image_tag, f'\n{image_tag}\n')
@@ -443,10 +443,15 @@ def display_if_image(image_file_path):
     except KeyboardInterrupt:
         pass
 
-def display_inline_image(attachment_filename, attachments):
-    for attachment in attachments:
-        if attachment.filename == attachment_filename:
-            return display_attachment(attachment)
+def display_inline_image(attachment_identifier, attachments, use_cid=False):
+    if use_cid:
+        for attachment in attachments:
+            if attachment.content_id[1:-1] == attachment_identifier:
+                return display_attachment(attachment)
+    else:
+        for attachment in attachments:
+            if attachment.filename == attachment_identifier:
+                return display_attachment(attachment)
 
 def display_attachment(attachment, downloaded_attachment_location_map=None):
     if downloaded_attachment_location_map and attachment.filename in downloaded_attachment_location_map:
@@ -495,9 +500,13 @@ def read_new_messages():
             text_to_print = make_sure_images_are_on_seperate_lines(message_text[:length_to_print])
 
             for line in text_to_print.split('\n'):
-                if inline_image_regex.findall(line):
+                if inline_image_regex_gmail.findall(line):
                     attachment_filename = line.split(' ')[-1][:-1]
                     temp_filename = display_inline_image(attachment_filename, message.attachments)
+                    downloaded_attachment_location_map[attachment_filename] = temp_filename
+                elif inline_image_regex_outlook.findall(line):
+                    attachment_filename = line.split(':')[-1][:-1]
+                    temp_filename = display_inline_image(attachment_filename, message.attachments, use_cid=True)
                     downloaded_attachment_location_map[attachment_filename] = temp_filename
                 else:
                     print(line)
