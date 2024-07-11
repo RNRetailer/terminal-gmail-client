@@ -501,11 +501,11 @@ def read_new_messages():
 
             for line in text_to_print.split('\n'):
                 if inline_image_regex_gmail.findall(line):
-                    attachment_filename = line.split(' ')[-1][:-1]
+                    attachment_filename = line[8:-1]
                     temp_filename = display_inline_image(attachment_filename, message.attachments)
                     downloaded_attachment_location_map[attachment_filename] = temp_filename
                 elif inline_image_regex_outlook.findall(line):
-                    attachment_filename = line.split(':')[-1][:-1]
+                    attachment_filename = line[5:-1]
                     temp_filename = display_inline_image(attachment_filename, message.attachments, use_cid=True)
                     downloaded_attachment_location_map[attachment_filename] = temp_filename
                 else:
