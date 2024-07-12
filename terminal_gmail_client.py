@@ -513,6 +513,8 @@ def read_new_messages():
                 
             if len(message.attachments):
                 print('---- Attachments ----')
+                
+                files_to_keep = []
 
                 for index, attachment in enumerate(message.attachments):
                     content = attachment.payload
@@ -535,6 +537,8 @@ def read_new_messages():
                             downloaded_attachment_location_map[filename] = requested_filepath
                         else:
                             attachment.download(requested_filepath)
+                            
+                        files_to_keep.append(requested_filepath)
 
                     attachment_is_image = is_attachment_an_image(attachment)
 
@@ -564,6 +568,10 @@ def read_new_messages():
 
                             for line in attachment_content[:length_to_print].split('\n'):
                                 print(line)
+                                
+                for filepath in downloaded_attachment_location_map.values():
+                    if filepath not in files_to_keep:
+                        os.remove(filepath)
 
         elif user_input_validated == 'M':
             message.mark_read()
