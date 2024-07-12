@@ -15,4 +15,8 @@
  Check out our paid edition here: https://terminalwebmail.com/ <br><br>
 ![1](https://github.com/user-attachments/assets/198d4bbd-8c6d-4925-acae-87d7b7e64df8)
 ![2](https://github.com/user-attachments/assets/08401dff-6355-48b4-b97e-6bfdbe9bc2c7)
-![3](https://github.com/user-attachments/assets/5196d1e1-3160-4b1e-8de7-2df3aa40b230)
+![3](https://github.com/user-attachments/assets/5196d1e1-3160-4b1e-8de7-2df3aa40b230)\
+![8931-0ee8-4b92-b542-4a814c7ab35f-ezgif com-optimize](https://github.com/user-attachments/assets/e8ae1f2d-b58e-46ba-9fc7-b8a70e78cdb4)
+![8931-0ee8-4b92-b542-4a814c7ab35f-ezgif com-optimize](https://github.com/user-attachments/assets/e8ae1f2d-b58e-46ba-9fc7-b8a70e78cdb4)\
+![8931-0ee8-4b92-b542-4a814c7ab35f-ezgif com-optimize](https://github.com/user-attachments/assets/e8ae1f2d-b58e-46ba-9fc7-b8a70e78cdb4)
+![8931-0ee8-4b92-b542-4a814c7ab35f-ezgif com-optimize](https://github.com/user-attachments/assets/e8ae1f2d-b58e-46ba-9fc7-b8a70e78cdb4)
