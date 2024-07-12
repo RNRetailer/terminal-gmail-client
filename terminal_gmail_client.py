@@ -550,7 +550,7 @@ def read_new_messages():
                         
                     if should_display == 'P':
                         if attachment_is_image:
-                            display_attachment(attachment, downloaded_attachment_location_map)
+                            downloaded_attachment_location_map[filename] = display_attachment(attachment, downloaded_attachment_location_map)
                         else:
                             attachment_content = content.decode('utf8')
 
