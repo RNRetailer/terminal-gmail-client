@@ -1,5 +1,28 @@
 # terminal gmail client
- Gmail client in the Linux terminal. Written in Python3.\
+
+Access GMail in the Linux terminal easily and safely!
+
+Boasting an extremely simple and streamlined user interface and every feature a normal email user would ever need, Terminal Webmail is your solution to the laggy browser based experience that we've been taught to accept.
+
+If you buy this SKU, you can use the program with as many email addresses as you'd like.
+
+Features:
+
+- Print email in terminal including inline images and gifs
+
+- Print attachments in terminal
+
+- Download attachments
+
+- Mark email as read
+
+- Reply to email using the default EDITOR on your system
+
+- Write email
+
+- Set to, cc, and bcc for any reply or written email
+
+# installation
  First, make a virtual env to put the files from this repo into.\
  Then, source the virtual env.\
  Next, install requirements with ```pip3 install -r requirements.txt```\
