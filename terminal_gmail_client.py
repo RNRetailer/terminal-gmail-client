@@ -614,8 +614,14 @@ def read_new_messages():
                     actual_cc.append(possible_recipient)
                 elif user_input_validated == 'B':
                     actual_bcc.append(possible_recipient)
-
-            gather_to_cc_bcc_email_recipients(actual_recipients, actual_cc, actual_bcc, True)
+                    
+            while not (actual_recipients or actual_cc or actual_bcc):
+                gather_to_cc_bcc_email_recipients(
+                    actual_recipients,
+                    actual_cc,
+                    actual_bcc,
+                    True
+                )
                 
             reply_body = ask_for_non_blank_user_input('Type your reply:', True)
 
@@ -650,12 +656,13 @@ def write_email():
     actual_recipients = []
     actual_cc = []
     actual_bcc = []
-
-    gather_to_cc_bcc_email_recipients(
-        actual_recipients,
-        actual_cc,
-        actual_bcc
-    )
+  
+    while not (actual_recipients or actual_cc or actual_bcc):
+        gather_to_cc_bcc_email_recipients(
+            actual_recipients,
+            actual_cc,
+            actual_bcc
+        )
         
     attachments = add_attachments()
 
