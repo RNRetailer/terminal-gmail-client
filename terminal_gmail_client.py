@@ -712,7 +712,6 @@ def read_new_messages():
             # write reply email body
             reply_body = ask_for_non_blank_user_input('Type your reply:', True)
 
-
             # add thread history to reply_body
             reply_body, _ = google_workspace.gmail.utils.create_replied_message(message, reply_body, None)
 
