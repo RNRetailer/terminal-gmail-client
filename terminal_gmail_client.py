@@ -469,6 +469,12 @@ def display_if_image(image_file_path):
         )
     except KeyboardInterrupt:
         pass
+        
+def display_first_image_attachment_you_can_find(attachments):
+    for attachment in attachments:
+        if is_attachment_an_image(attachment):
+            return display_attachment(attachment)
+        
 
 def display_inline_image(attachment_identifier, attachments, use_cid=False):
     """
@@ -483,6 +489,8 @@ def display_inline_image(attachment_identifier, attachments, use_cid=False):
         for attachment in attachments:
             if attachment.filename == attachment_identifier:
                 return display_attachment(attachment)
+                
+    return display_first_image_attachment_you_can_find(attachments)
 
 def display_attachment(attachment, downloaded_attachment_location_map=None):
     """
@@ -554,12 +562,17 @@ def read_new_messages():
                         attachment_filename = line[8:-1]
                         
                     temp_filename = display_inline_image(attachment_filename, message.attachments)
-                    downloaded_attachment_location_map[attachment_filename] = temp_filename
+                    
+                    if temp_filename:
+                        downloaded_attachment_location_map[attachment_filename] = temp_filename
+                        
                 elif inline_image_regex_outlook.findall(line):
                     # [cid:FILENAME]
                     attachment_filename = line[5:-1]
                     temp_filename = display_inline_image(attachment_filename, message.attachments, use_cid=True)
-                    downloaded_attachment_location_map[attachment_filename] = temp_filename
+                    
+                    if temp_filename:
+                        downloaded_attachment_location_map[attachment_filename] = temp_filename
                 else:
                     print(line)
                 
