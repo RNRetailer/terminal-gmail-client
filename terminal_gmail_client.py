@@ -544,10 +544,19 @@ def read_new_messages():
 
             for line in text_to_print.split('\n'):
                 if inline_image_regex_gmail.findall(line):
-                    attachment_filename = line[8:-1]
+                    if 'cid:' in line:
+                        # [image: cid:FILENAME@hash]
+                    
+                        last_at_sign = line.rfind('@')
+                        attachment_filename = line[12: last_at_sign]
+                    else:
+                        # [image: FILENAME]
+                        attachment_filename = line[8:-1]
+                        
                     temp_filename = display_inline_image(attachment_filename, message.attachments)
                     downloaded_attachment_location_map[attachment_filename] = temp_filename
                 elif inline_image_regex_outlook.findall(line):
+                    # [cid:FILENAME]
                     attachment_filename = line[5:-1]
                     temp_filename = display_inline_image(attachment_filename, message.attachments, use_cid=True)
                     downloaded_attachment_location_map[attachment_filename] = temp_filename
