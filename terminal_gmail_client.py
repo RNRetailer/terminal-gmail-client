@@ -475,7 +475,6 @@ def display_first_image_attachment_you_can_find(attachments):
         if is_attachment_an_image(attachment):
             return display_attachment(attachment)
         
-
 def display_inline_image(attachment_identifier, attachments, use_cid=False):
     """
         Prints an image to the terminal identified by an inline image tag in the email.
