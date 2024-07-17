@@ -47,7 +47,7 @@ print = pprint
 
 def ask_for_user_input(prompt: str, valid_options: Iterable):
     """
-        Gets user input from the terminal and checks it against an Iterable of valid options
+        Gets user input from the terminal and checks it against an Iterable of valid options.
     """
 
     while True:
@@ -62,7 +62,7 @@ def ask_for_user_input(prompt: str, valid_options: Iterable):
 
 def ask_for_user_input_regex(prompt: str, regex_pattern: re.Pattern, return_on_blank=False, regex_failure_message='Input failed validation'):
     """
-        Gets user input from the terminal and checks it against a regular expression
+        Gets user input from the terminal and checks it against a regular expression.
     """
 
     while True:
@@ -82,7 +82,7 @@ def ask_for_user_input_regex(prompt: str, regex_pattern: re.Pattern, return_on_b
 def ask_for_non_blank_user_input(prompt: str, use_editor: bool = False):
     """
         Gets user input from the terminal and makes sure that is is not blank.
-        Supports input from the system EDITOR as well as standard Python input
+        Supports input from the system EDITOR as well as standard Python input.
     """
 
     while True:
@@ -101,7 +101,7 @@ def ask_for_non_blank_user_input(prompt: str, use_editor: bool = False):
 
 def gather_to_cc_bcc_email_recipients(actual_recipients: list, actual_cc: list, actual_bcc: list, is_reply=False):
     """
-        Gets recipient email addresses from user input and adds them to the recipients, CC, and BCC lists in-place
+        Gets recipient email addresses from user input and adds them to the recipients, CC, and BCC lists in-place.
     """
     
     choice_to_verbose_name_dict = {
@@ -156,6 +156,10 @@ def gather_to_cc_bcc_email_recipients(actual_recipients: list, actual_cc: list, 
         
         
 def add_attachments():
+    """
+        Add attachments to an email by putting their filepaths into a list.
+    """
+    
     attachments = []
 
     while True:
@@ -180,14 +184,15 @@ def add_attachments():
 
 def accept_any_input(prompt: str):
     """
-        Get input from the user without checking it
+        Get input from the user without checking it.
     """
+    
     print(prompt)
     return input()
     
 def ask_for_integer_input(prompt: str, maximum: int, minimum: int = 0, maximum_on_blank: bool = True):
     """
-        Gets user input from the terminal and checks if it is an integer in the correct range
+        Gets user input from the terminal and checks if it is an integer in the correct range.
     """
 
     while True:
@@ -222,6 +227,7 @@ def is_pathname_valid(pathname: str) -> bool:
     `True` if the passed pathname is a valid pathname for the current OS;
     `False` otherwise.
     '''
+    
     # If this pathname is either not a string or is but is empty, this pathname
     # is invalid.
     try:
@@ -291,6 +297,7 @@ def is_path_creatable(pathname: str) -> bool:
     `True` if the current user has sufficient permissions to create the passed
     pathname; `False` otherwise.
     '''
+    
     # Parent directory of the passed path. If empty, we substitute the current
     # working directory (CWD) instead.
     dirname = os.path.dirname(pathname) or os.getcwd()
@@ -303,6 +310,7 @@ def is_path_exists_or_creatable(pathname: str) -> bool:
 
     This function is guaranteed to _never_ raise exceptions.
     '''
+    
     try:
         # To prevent "os" module calls from raising undesirable exceptions on
         # invalid pathnames, is_pathname_valid() is explicitly called first.
@@ -320,6 +328,7 @@ def is_path_sibling_creatable(pathname: str) -> bool:
     (i.e., arbitrary files in the parent directory) of the passed pathname;
     `False` otherwise.
     '''
+    
     # Parent directory of the passed path. If empty, we substitute the current
     # working directory (CWD) instead.
     dirname = os.path.dirname(pathname) or os.getcwd()
@@ -343,6 +352,7 @@ def is_path_exists_or_creatable_portable(pathname: str) -> bool:
 
     This function is guaranteed to _never_ raise exceptions.    
     '''
+    
     try:
         # To prevent "os" module calls from raising undesirable exceptions on
         # invalid pathnames, is_pathname_valid() is explicitly called first.
@@ -358,8 +368,9 @@ def is_path_exists_or_creatable_portable(pathname: str) -> bool:
     
 def get_valid_filepath(prompt: str, return_on_blank: bool = True):
     """
-        Get vaild filename from user
-    """    
+        Get vaild filename from user.
+    """
+    
     while True:
         print(prompt)
             
@@ -380,7 +391,7 @@ def get_valid_filepath(prompt: str, return_on_blank: bool = True):
 
 def connect():
     """
-        Connects to the GMail API via OAUTH
+        Connects to the GMail API via OAUTH.
     """
     service = google_workspace.service.GoogleService(
         api="gmail",
@@ -406,6 +417,10 @@ inline_image_regex_gmail = re.compile(r"\[image: .*\]")
 inline_image_regex_outlook = re.compile(r"\[cid:.*\]")
 
 def make_sure_images_are_on_seperate_lines(message_content):
+    """
+        Puts breaklines around inline images in email text.
+    """
+    
     image_tags = inline_image_regex_gmail.findall(message_content) + inline_image_regex_outlook.findall(message_content)
 
     for image_tag in image_tags:
@@ -414,6 +429,10 @@ def make_sure_images_are_on_seperate_lines(message_content):
     return message_content
 
 def is_filename_an_image(attachment_file_path):
+    """
+        Checks if a filepath points to an image.
+    """
+    
     try:
         Image.open(attachment_file_path)
         return True
@@ -421,6 +440,10 @@ def is_filename_an_image(attachment_file_path):
         return False
 
 def is_attachment_an_image(attachment):
+    """
+        Checks if an attachment file is an image.
+    """
+    
     try:
         Image.open(
             io.BytesIO(
@@ -432,6 +455,10 @@ def is_attachment_an_image(attachment):
         return False
     
 def display_if_image(image_file_path):
+    """
+        Prints a file to the terminal if it is an image.
+    """
+    
     if not is_filename_an_image(image_file_path):
         return
         
@@ -444,6 +471,10 @@ def display_if_image(image_file_path):
         pass
 
 def display_inline_image(attachment_identifier, attachments, use_cid=False):
+    """
+        Prints an image to the terminal identified by an inline image tag in the email.
+    """
+    
     if use_cid:
         for attachment in attachments:
             if attachment.content_id[1:-1] == attachment_identifier:
@@ -454,6 +485,10 @@ def display_inline_image(attachment_identifier, attachments, use_cid=False):
                 return display_attachment(attachment)
 
 def display_attachment(attachment, downloaded_attachment_location_map=None):
+    """
+        Prints an image to the terminal identified by an inline image tag in the email.
+    """
+    
     if downloaded_attachment_location_map and attachment.filename in downloaded_attachment_location_map:
         filepath = downloaded_attachment_location_map[attachment.filename]
     else:
@@ -465,10 +500,12 @@ def display_attachment(attachment, downloaded_attachment_location_map=None):
 
 def read_new_messages():
     """
-        Get all unread messages from GMail and allow the user to read the message content, mark the message as read, and send threaded reply emails
+        Get all unread messages from GMail and allow the user to read the message content, mark the message as read, and send threaded reply emails.
     """
 
     for message in gmail_client.get_messages(seen=False):
+        # print email header
+        
         print('----------------------------------------')
         print(message.date.strftime('%x %-H:%-M UTC'))
         print(f'From: {message.from_}')
@@ -477,6 +514,7 @@ def read_new_messages():
         print(f"BCC: {', '.join(message.bcc)}")
         print(f'Subject: {message.subject}\n') 
 
+        # ask user how to react to email
         user_input_validated = ask_for_user_input(
             '(R)ead, (M)ark read, (S)kip:',
             ('R', 'M', 'S')
@@ -484,11 +522,15 @@ def read_new_messages():
 
         downloaded_attachment_location_map = {}
 
+        # read the email
         if user_input_validated == 'R':
+        
+            # get email text
             message_text = message.text if message.text else message.html_text
             
             message_length = len(message_text)
             
+            # if email is long, ask user how many characters they want to see
             if message_length >= LONG_PRINTED_STRING_MINIMUM_LENGTH:
                 length_to_print = ask_for_integer_input(
                     f'This message is long at {message_length} characters. It might be a long reply chain. How many characters do you want to see (taken from the beginning)? Press enter to see them all.',
@@ -497,6 +539,7 @@ def read_new_messages():
             else:
                 length_to_print = message_length
 
+            # print the email to the terminal
             text_to_print = make_sure_images_are_on_seperate_lines(message_text[:length_to_print])
 
             for line in text_to_print.split('\n'):
@@ -511,6 +554,7 @@ def read_new_messages():
                 else:
                     print(line)
                 
+            # react to email attachments
             if len(message.attachments):
                 print('---- Attachments ----')
                 
@@ -526,6 +570,7 @@ def read_new_messages():
 
                     default_download_location = filename if filename else f'attachment-{index}'
                     
+                    # download attachment
                     if should_download == 'D':
                         requested_filepath = get_valid_filepath(f'Please enter the path you want to download this file to. Press Enter for {default_download_location}')
 
@@ -548,6 +593,7 @@ def read_new_messages():
                         
                     should_display = ask_for_user_input(f'Do you want to (P)rint or (S)kip attachment #{one_index} with filename "{filename}"', ('P', 'S'))
                         
+                    # print attachment
                     if should_display == 'P':
                         if attachment_is_image:
                             downloaded_attachment_location_map[filename] = display_attachment(attachment, downloaded_attachment_location_map)
@@ -569,25 +615,32 @@ def read_new_messages():
                             for line in attachment_content[:length_to_print].split('\n'):
                                 print(line)
                                 
+                # cllean up attachment temp files
                 for filepath in downloaded_attachment_location_map.values():
                     if filepath not in files_to_keep:
                         os.remove(filepath)
 
+        # mark the email as read
         elif user_input_validated == 'M':
             message.mark_read()
             continue       
 
+        # skip the email
         elif user_input_validated == 'S':
             continue
+            
+        # react to the email after reading it
 
         user_input_validated = ask_for_user_input(
             '(M)ark read, (R)eply, (S)kip:',
             ('M', 'R', 'S')
         )
 
+        # mark email as read
         if user_input_validated == 'M':
             message.mark_read()
 
+        # reply to email
         elif user_input_validated == 'R':
             possible_recipients = list(dict.fromkeys(
                 [message.from_]
@@ -600,6 +653,7 @@ def read_new_messages():
             actual_cc = []
             actual_bcc = []
 
+            # choose which emails to reply to
             for possible_recipient in possible_recipients:
                 user_input_validated = None
 
@@ -615,6 +669,15 @@ def read_new_messages():
                 elif user_input_validated == 'B':
                     actual_bcc.append(possible_recipient)
                     
+            # ask if the user wants to add any recipients who weren't on the original email
+            gather_to_cc_bcc_email_recipients(
+                actual_recipients,
+                actual_cc,
+                actual_bcc,
+                True
+            )
+             
+            # make sure there is at least one recipient
             while not (actual_recipients or actual_cc or actual_bcc):
                 gather_to_cc_bcc_email_recipients(
                     actual_recipients,
@@ -623,12 +686,15 @@ def read_new_messages():
                     True
                 )
                 
+            # write reply email body
             reply_body = ask_for_non_blank_user_input('Type your reply:', True)
 
             reply_body, _ = google_workspace.gmail.utils.create_replied_message(message, reply_body, None)
 
+            # add attachments to reply email
             attachments = add_attachments()            
 
+            # send reply email
             gmail_client.send_message(
                 to=actual_recipients,
                 cc=actual_cc,
@@ -639,24 +705,28 @@ def read_new_messages():
                 thread_id=message.thread_id,
                 attachments=attachments,
             )             
-
+   
+            # mark email as read after you reply to it
             message.mark_read()
 
 def write_email():
     """
-        Allow the user to write an email
+        Allow the user to write an email.
     """
 
+    # get subject of email from user
     subject = ask_for_non_blank_user_input('Subject:')
 
     accept_any_input('Press Enter to write the email body')
 
+    # get body of email from user
     body = ask_for_non_blank_user_input('Subject:', True)
 
     actual_recipients = []
     actual_cc = []
     actual_bcc = []
   
+    # get recipients of email from user
     while not (actual_recipients or actual_cc or actual_bcc):
         gather_to_cc_bcc_email_recipients(
             actual_recipients,
@@ -664,8 +734,10 @@ def write_email():
             actual_bcc
         )
         
+    # get attachments for email from user
     attachments = add_attachments()
 
+    # send email (new thread, not a reply)
     gmail_client.send_message(
         to=actual_recipients,
         cc=actual_cc,
@@ -680,12 +752,17 @@ def write_email():
 # entry point
 
 if __name__ == "__main__":
+
+    # ask user what action they want to take
     operation = ask_for_user_input(
         'Do you want to (R)ead your new emails or (W)rite an email?',
         ('R', 'W')
     )
 
+    # read emails
     if operation == 'R':
         read_new_messages()
+        
+    # write email
     elif operation == 'W':
         write_email()
