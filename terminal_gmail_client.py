@@ -413,8 +413,8 @@ gmail_client = connect()
 
 textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
 is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
-inline_image_regex_gmail = re.compile(r"\[image: .*\]")
-inline_image_regex_outlook = re.compile(r"\[cid:.*\]")
+inline_image_regex_gmail = re.compile(r"\[?image: .*\]?")
+inline_image_regex_outlook = re.compile(r"\[?cid:.*\]?")
 
 def make_sure_images_are_on_seperate_lines(message_content):
     """
@@ -424,8 +424,10 @@ def make_sure_images_are_on_seperate_lines(message_content):
     image_tags = inline_image_regex_gmail.findall(message_content) + inline_image_regex_outlook.findall(message_content)
 
     for image_tag in image_tags:
-        message_content = message_content.replace(image_tag, f'\n{image_tag}\n')
-
+        if image_tag.startswith('['):
+            message_content = message_content.replace(image_tag, f'\n{image_tag}\n')
+        else:
+            message_content = message_content.replace(image_tag, f'\n[{image_tag}]\n')
     return message_content
 
 def is_filename_an_image(attachment_file_path):
