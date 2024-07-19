@@ -13,10 +13,15 @@ from PIL import UnidentifiedImageError
 import uuid
 import shutil
 import io
+import datetime
+from typing import Optional
 
 ##############################################################################################################################################
 
 # CONFIG
+
+# email options
+MAXIMUM_RETURNED_EMAILS_FROM_SEARCH = 1000
 
 # set terminal size
 TERMINAL_ROWS = 32
@@ -36,7 +41,7 @@ print('\x1b[8;{0};{1}t'.format(TERMINAL_ROWS, TERMINAL_COLS), end='', flush=True
 EMAIL_VALIDATION_REGEX = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
 
 # pretty print
-def pprint(text):
+def pprint(text) -> None:
     cprint(text, "black", "on_white")
 
 print = pprint
@@ -45,7 +50,7 @@ print = pprint
 
 # USER INPUT FUNCTIONS
 
-def ask_for_user_input(prompt: str, valid_options: Iterable):
+def ask_for_user_input(prompt: str, valid_options: Iterable) -> str:
     """
         Gets user input from the terminal and checks it against an Iterable of valid options.
     """
@@ -60,7 +65,7 @@ def ask_for_user_input(prompt: str, valid_options: Iterable):
         else:
             print('Invalid input')
 
-def ask_for_user_input_regex(prompt: str, regex_pattern: re.Pattern, return_on_blank=False, regex_failure_message='Input failed validation'):
+def ask_for_user_input_regex(prompt: str, regex_pattern: re.Pattern, return_on_blank=False, regex_failure_message='Input failed validation') -> Optional[str]:
     """
         Gets user input from the terminal and checks it against a regular expression.
     """
@@ -79,7 +84,7 @@ def ask_for_user_input_regex(prompt: str, regex_pattern: re.Pattern, return_on_b
 
         return user_input
 
-def ask_for_non_blank_user_input(prompt: str, use_editor: bool = False):
+def ask_for_non_blank_user_input(prompt: str, use_editor: bool = False) -> str:
     """
         Gets user input from the terminal and makes sure that is is not blank.
         Supports input from the system EDITOR as well as standard Python input.
@@ -99,7 +104,7 @@ def ask_for_non_blank_user_input(prompt: str, use_editor: bool = False):
 
         return user_input
 
-def gather_to_cc_bcc_email_recipients(actual_recipients: list, actual_cc: list, actual_bcc: list, is_reply=False):
+def gather_to_cc_bcc_email_recipients(actual_recipients: list, actual_cc: list, actual_bcc: list, is_reply=False) -> None:
     """
         Gets recipient email addresses from user input and adds them to the recipients, CC, and BCC lists in-place.
     """
@@ -155,7 +160,7 @@ def gather_to_cc_bcc_email_recipients(actual_recipients: list, actual_cc: list, 
         applicable_email_address_list.append(user_input_email)
         
         
-def add_attachments():
+def add_attachments() -> list:
     """
         Add attachments to an email by putting their filepaths into a list.
     """
@@ -182,15 +187,24 @@ def add_attachments():
         
     return attachments
 
-def accept_any_input(prompt: str):
+def accept_any_input(prompt: str, blank_is_none: bool = false) -> Optional[str]:
     """
         Get input from the user without checking it.
     """
     
     print(prompt)
-    return input()
     
-def ask_for_integer_input(prompt: str, maximum: int, minimum: int = 0, maximum_on_blank: bool = True):
+    user_input = input().strip()
+    
+    if not user_input and blank_is_none:
+        return None
+        
+    return user_input
+    
+def accept_any_input_blank_is_none(prompt: str) -> Optional[str]:
+    return accept_any_input(prompt, True)
+    
+def ask_for_integer_input(prompt: str, maximum: int, minimum: int = 0, maximum_on_blank: bool = True) -> int:
     """
         Gets user input from the terminal and checks if it is an integer in the correct range.
     """
@@ -200,7 +214,7 @@ def ask_for_integer_input(prompt: str, maximum: int, minimum: int = 0, maximum_o
 
         user_input = input().strip()
         
-        if not user_input:
+        if maximum_on_blank and not user_input:
             return maximum
             
         try:
@@ -218,6 +232,18 @@ def ask_for_integer_input(prompt: str, maximum: int, minimum: int = 0, maximum_o
             continue
             
         return user_input
+        
+def date_input(yes_no_prompt: str) -> Optional[datetime.date]:
+    user_wants_to_input_date = ask_for_user_input(yes_no_prompt, ('Y', 'N'))
+    
+    if user_wants_to_input_date == 'N':
+        return
+        
+    day = ask_for_integer_input('Day?', maximum=31, minimum=1, maximum_on_blank=False)
+    month = ask_for_integer_input('Month?', maximum=12, minimum=1, maximum_on_blank=False)
+    year = ask_for_integer_input('Year?', maximum=9999, minimum=0, maximum_on_blank=False)
+    
+    return datetime.date(year, month, day)
     
 # below from https://stackoverflow.com/questions/9532499/check-whether-a-path-is-valid-in-python-without-creating-a-file-at-the-paths-ta
 # /start 
@@ -366,7 +392,7 @@ def is_path_exists_or_creatable_portable(pathname: str) -> bool:
         
 # /end
     
-def get_valid_filepath(prompt: str, return_on_blank: bool = True):
+def get_valid_filepath(prompt: str, return_on_blank: bool = True) -> Optional[str]:
     """
         Get vaild filename from user.
     """
@@ -389,7 +415,7 @@ def get_valid_filepath(prompt: str, return_on_blank: bool = True):
 
 # SETUP FUNCTIONS
 
-def connect():
+def connect() -> google_workspace.gmail.GmailClient:
     """
         Connects to the GMail API via OAUTH.
     """
@@ -416,7 +442,7 @@ is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
 inline_image_regex_gmail = re.compile(r"\[?image: .*\]?")
 inline_image_regex_outlook = re.compile(r"\[?cid:.*\]?")
 
-def make_sure_images_are_on_seperate_lines(message_content):
+def make_sure_images_are_on_seperate_lines(message_content) -> str:
     """
         Puts breaklines around inline images in email text.
     """
@@ -428,9 +454,10 @@ def make_sure_images_are_on_seperate_lines(message_content):
             message_content = message_content.replace(image_tag, f'\n{image_tag}\n')
         else:
             message_content = message_content.replace(image_tag, f'\n[{image_tag}]\n')
+            
     return message_content
 
-def is_filename_an_image(attachment_file_path):
+def is_filename_an_image(attachment_file_path) -> bool:
     """
         Checks if a filepath points to an image.
     """
@@ -441,7 +468,7 @@ def is_filename_an_image(attachment_file_path):
     except UnidentifiedImageError:
         return False
 
-def is_attachment_an_image(attachment):
+def is_attachment_an_image(attachment) -> bool:
     """
         Checks if an attachment file is an image.
     """
@@ -456,7 +483,7 @@ def is_attachment_an_image(attachment):
     except UnidentifiedImageError:
         return False
     
-def display_if_image(image_file_path):
+def display_if_image(image_file_path) -> None:
     """
         Prints a file to the terminal if it is an image.
     """
@@ -472,12 +499,12 @@ def display_if_image(image_file_path):
     except KeyboardInterrupt:
         pass
         
-def display_first_image_attachment_you_can_find(attachments):
+def display_first_image_attachment_you_can_find(attachments) -> Optional[str]:
     for attachment in attachments:
         if is_attachment_an_image(attachment):
             return display_attachment(attachment)
         
-def display_inline_image(attachment_identifier, attachments, use_cid=False):
+def display_inline_image(attachment_identifier, attachments, use_cid=False) -> Optional[str]:
     """
         Prints an image to the terminal identified by an inline image tag in the email.
     """
@@ -493,7 +520,7 @@ def display_inline_image(attachment_identifier, attachments, use_cid=False):
                 
     return display_first_image_attachment_you_can_find(attachments)
 
-def display_attachment(attachment, downloaded_attachment_location_map=None):
+def display_attachment(attachment, downloaded_attachment_location_map=None) -> str:
     """
         Prints an image to the terminal identified by an inline image tag in the email.
     """
@@ -506,13 +533,16 @@ def display_attachment(attachment, downloaded_attachment_location_map=None):
 
     display_if_image(filepath)
     return filepath
+    
+def read_new_messages() -> None:
+    return read_messages(gmail_client.get_messages(seen=False))
 
-def read_new_messages():
+def read_messages(messages) -> None:
     """
         Get all unread messages from GMail and allow the user to read the message content, mark the message as read, and send threaded reply emails.
     """
 
-    for message in gmail_client.get_messages(seen=False):
+    for message in messages:
         # print email header
         
         print('----------------------------------------')
@@ -733,7 +763,7 @@ def read_new_messages():
             # mark email as read after you reply to it
             message.mark_read()
 
-def write_email():
+def write_email() -> None:
     """
         Allow the user to write an email.
     """
@@ -770,6 +800,21 @@ def write_email():
         text=body,
         attachments=attachments,
     )
+    
+ def search_for_emails() -> None:
+    from_ = accept_any_input_blank_is_none('From:')
+    to = accept_any_input_blank_is_none('To (comma seperated):')
+    subject = accept_any_input_blank_is_none('Subject:')
+    seen = True if ask_for_user_input('(S)een or (U)nseen?', ('S', 'U')) == 'S' else False
+    before = date_input('Do you want to enter a Before date?')
+    after = date_input('Do you want to enter a After date?')
+    label_name = accept_any_input_blank_is_none('Label name:')
+    include_spam_and_trash = True if ask_for_user_input('Include spam and trash (Y or N)', ('Y', 'N')) == 'Y' else False
+    limit = ask_for_integer_input('Maximum returned emails?', maximum=MAXIMUM_RETURNED_EMAILS_FROM_SEARCH, minimum=1, maximum_on_blank=True)
+     
+    messages = gmail_client.get_messages(seen=seen, from_=from_, to=to, subject=subject, after=after, before=before, label_name=label_name, include_spam_and_trash=include_spam_and_trash, limit=limit)
+
+    return read_messages(messages)
 
 ##############################################################################################################################################
 
@@ -779,13 +824,17 @@ if __name__ == "__main__":
 
     # ask user what action they want to take
     operation = ask_for_user_input(
-        'Do you want to (R)ead your new emails or (W)rite an email?',
-        ('R', 'W')
+        'Do you want to (R)ead your new emails, (S)earch for emails, or (W)rite an email?',
+        ('R', 'S', 'W')
     )
 
     # read emails
     if operation == 'R':
         read_new_messages()
+        
+    # search emails
+    if operation == 'S':
+        search_for_emails()
         
     # write email
     elif operation == 'W':
