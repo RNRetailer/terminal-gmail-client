@@ -813,7 +813,9 @@ def write_email() -> None:
     
 def search_for_emails() -> None:
     from_ = accept_any_input_blank_is_none('From:')
+    
     to = accept_any_input_blank_is_none('To (comma seperated):')
+    
     subject = accept_any_input_blank_is_none('Subject:')
         
     seen = map_user_input(
