@@ -64,6 +64,16 @@ def ask_for_user_input(prompt: str, valid_options: Iterable) -> str:
             return user_input
         else:
             print('Invalid input')
+            
+def map_user_input(prompt: str, valid_options_map: dict) -> str:
+    """
+        Gets user input from the terminal and checks it against an Iterable of valid options, then maps it to a specified output.
+    """
+
+    user_input = ask_for_user_input(prompt, valid_options_map.keys())
+    
+    return valid_options_map[user_input]
+
 
 def ask_for_user_input_regex(prompt: str, regex_pattern: re.Pattern, return_on_blank=False, regex_failure_message='Input failed validation') -> Optional[str]:
     """
@@ -805,16 +815,16 @@ def search_for_emails() -> None:
     from_ = accept_any_input_blank_is_none('From:')
     to = accept_any_input_blank_is_none('To (comma seperated):')
     subject = accept_any_input_blank_is_none('Subject:')
-    seen = ask_for_user_input('(S)een, (U)nseen, or (B)oth?', ('S', 'U', 'B'))
-
-    if seen == 'S':
-        seen = True
-    elif seen == 'U':
-        seen = False
-    elif seen == 'B':
-        seen = None
-    else:
-        raise ValueError('seen value is invalid')
+        
+    seen = map_user_input(
+        '(S)een, (U)nseen, or (B)oth?', 
+        
+        {
+            'S': True,
+            'U': False,
+            'B': None,
+        }
+    )
 
     before = date_input('Do you want to enter a Before date? (Y or N)')
     after = date_input('Do you want to enter a After date? (Y or N)')
@@ -822,7 +832,17 @@ def search_for_emails() -> None:
     include_spam_and_trash = True if ask_for_user_input('Include spam and trash (Y or N)', ('Y', 'N')) == 'Y' else False
     limit = ask_for_integer_input('Maximum returned emails?', maximum=MAXIMUM_RETURNED_EMAILS_FROM_SEARCH, minimum=1, maximum_on_blank=True)
      
-    messages = gmail_client.get_messages(seen=seen, from_=from_, to=to, subject=subject, after=after, before=before, label_name=label_name, include_spam_and_trash=include_spam_and_trash, limit=limit)
+    messages = gmail_client.get_messages(
+        seen=seen, 
+        from_=from_, 
+        to=to, 
+        subject=subject, 
+        after=after, 
+        before=before, 
+        label_name=label_name, 
+        include_spam_and_trash=include_spam_and_trash, 
+        limit=limit
+    )
 
     return read_messages(messages)
 
