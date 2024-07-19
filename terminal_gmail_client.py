@@ -827,10 +827,19 @@ def search_for_emails() -> None:
     )
 
     before = date_input('Do you want to enter a Before date? (Y or N)')
+    
     after = date_input('Do you want to enter a After date? (Y or N)')
+    
     label_name = accept_any_input_blank_is_none('Label name:')
+    
     include_spam_and_trash = True if ask_for_user_input('Include spam and trash (Y or N)', ('Y', 'N')) == 'Y' else False
-    limit = ask_for_integer_input('Maximum returned emails?', maximum=MAXIMUM_RETURNED_EMAILS_FROM_SEARCH, minimum=1, maximum_on_blank=True)
+    
+    limit = ask_for_integer_input(
+        'Maximum returned emails?', 
+        maximum=MAXIMUM_RETURNED_EMAILS_FROM_SEARCH,
+        minimum=1, 
+        maximum_on_blank=True
+    )
      
     messages = gmail_client.get_messages(
         seen=seen, 
