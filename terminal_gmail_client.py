@@ -187,7 +187,7 @@ def add_attachments() -> list:
         
     return attachments
 
-def accept_any_input(prompt: str, blank_is_none: bool = false) -> Optional[str]:
+def accept_any_input(prompt: str, blank_is_none: bool = False) -> Optional[str]:
     """
         Get input from the user without checking it.
     """
@@ -801,13 +801,23 @@ def write_email() -> None:
         attachments=attachments,
     )
     
- def search_for_emails() -> None:
+def search_for_emails() -> None:
     from_ = accept_any_input_blank_is_none('From:')
     to = accept_any_input_blank_is_none('To (comma seperated):')
     subject = accept_any_input_blank_is_none('Subject:')
-    seen = True if ask_for_user_input('(S)een or (U)nseen?', ('S', 'U')) == 'S' else False
-    before = date_input('Do you want to enter a Before date?')
-    after = date_input('Do you want to enter a After date?')
+    seen = ask_for_user_input('(S)een, (U)nseen, or (B)oth?', ('S', 'U', 'B'))
+
+    if seen == 'S':
+        seen = True
+    elif seen == 'U':
+        seen = False
+    elif seen == 'B':
+        seen = None
+    else:
+        raise ValueError('seen value is invalid')
+
+    before = date_input('Do you want to enter a Before date? (Y or N)')
+    after = date_input('Do you want to enter a After date? (Y or N)')
     label_name = accept_any_input_blank_is_none('Label name:')
     include_spam_and_trash = True if ask_for_user_input('Include spam and trash (Y or N)', ('Y', 'N')) == 'Y' else False
     limit = ask_for_integer_input('Maximum returned emails?', maximum=MAXIMUM_RETURNED_EMAILS_FROM_SEARCH, minimum=1, maximum_on_blank=True)
@@ -824,7 +834,7 @@ if __name__ == "__main__":
 
     # ask user what action they want to take
     operation = ask_for_user_input(
-        'Do you want to (R)ead your new emails, (S)earch for emails, or (W)rite an email?',
+        '\nDo you want to:\n (R)ead your new emails\n (S)earch for emails\n or (W)rite an email?',
         ('R', 'S', 'W')
     )
 
