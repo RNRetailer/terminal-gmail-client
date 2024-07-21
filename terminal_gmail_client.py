@@ -565,14 +565,14 @@ def read_messages(messages) -> None:
 
         # ask user how to react to email
         user_input_validated = ask_for_user_input(
-            '(R)ead, (M)ark read, (S)kip:',
-            ('R', 'M', 'S')
+            '(P)rint, Mark (R)ead, Mark (U)nread, (S)kip:',
+            ('P', 'R', 'U', 'S')
         )
 
         downloaded_attachment_location_map = {}
 
         # read the email
-        if user_input_validated == 'R':
+        if user_input_validated == 'P':
         
             # get email text
             message_text = message.text if message.text else message.html_text
@@ -684,8 +684,13 @@ def read_messages(messages) -> None:
                         os.remove(filepath)
 
         # mark the email as read
-        elif user_input_validated == 'M':
+        elif user_input_validated == 'R':
             message.mark_read()
+            continue       
+            
+        # mark the email as unread
+        elif user_input_validated == 'U':
+            message.mark_unread()
             continue       
 
         # skip the email
@@ -695,16 +700,20 @@ def read_messages(messages) -> None:
         # react to the email after reading it
 
         user_input_validated = ask_for_user_input(
-            '(M)ark read, (R)eply, (S)kip:',
-            ('M', 'R', 'S')
+            'Mark (R)ead, Mark (U)nread, R(e)ply, (S)kip:',
+            ('R', 'U', 'E', 'S')
         )
 
         # mark email as read
-        if user_input_validated == 'M':
+        if user_input_validated == 'R':
             message.mark_read()
+            
+        # mark the email as unread
+        elif user_input_validated == 'U':
+            message.mark_unread() 
 
         # reply to email
-        elif user_input_validated == 'R':
+        elif user_input_validated == 'E':
             possible_recipients = list(dict.fromkeys(
                 [message.from_]
                 + message.to
@@ -721,11 +730,11 @@ def read_messages(messages) -> None:
                 user_input_validated = None
 
                 user_input_validated = ask_for_user_input(
-                    f'For {possible_recipient}: (R)eply to, (C)c, (B)cc, (S)kip',
-                    ('R', 'C', 'B', 'S')
+                    f'For {possible_recipient}: R(e)ply to, (C)c, (B)cc, (S)kip',
+                    ('E', 'C', 'B', 'S')
                 )
 
-                if user_input_validated == 'R':
+                if user_input_validated == 'E':
                     actual_recipients.append(possible_recipient)
                 elif user_input_validated == 'C':
                     actual_cc.append(possible_recipient)
