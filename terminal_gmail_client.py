@@ -546,6 +546,14 @@ def display_attachment(attachment, downloaded_attachment_location_map=None) -> s
     
 def read_new_messages() -> None:
     return read_messages(gmail_client.get_messages(seen=False))
+    
+def mark_read(message: google_workspace.gmail.message.Message) -> None:
+    if not message.is_seen:
+        message.mark_read()
+        
+def mark_unread(message: google_workspace.gmail.message.Message) -> None:
+    if message.is_seen:
+        message.mark_unread()
 
 def read_messages(messages) -> None:
     """
@@ -685,12 +693,12 @@ def read_messages(messages) -> None:
 
         # mark the email as read
         elif user_input_validated == 'R':
-            message.mark_read()
+            mark_read(message)
             continue       
             
         # mark the email as unread
         elif user_input_validated == 'U':
-            message.mark_unread()
+            mark_unread(message)
             continue       
 
         # skip the email
@@ -706,11 +714,11 @@ def read_messages(messages) -> None:
 
         # mark email as read
         if user_input_validated == 'R':
-            message.mark_read()
+            mark_read(message)
             
         # mark the email as unread
         elif user_input_validated == 'U':
-            message.mark_unread() 
+            mark_unread(message) 
 
         # reply to email
         elif user_input_validated == 'E':
@@ -780,7 +788,7 @@ def read_messages(messages) -> None:
             )             
    
             # mark email as read after you reply to it
-            message.mark_read()
+            mark_read(message)
 
 def write_email() -> None:
     """
