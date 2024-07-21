@@ -565,7 +565,7 @@ def read_messages(messages) -> None:
 
         # ask user how to react to email
         user_input_validated = ask_for_user_input(
-            '(P)rint, Mark (R)ead, Mark (U)nread, (S)kip:',
+            '(P)rint, Mark (R)ead or (U)nread, (S)kip:',
             ('P', 'R', 'U', 'S')
         )
 
@@ -700,7 +700,7 @@ def read_messages(messages) -> None:
         # react to the email after reading it
 
         user_input_validated = ask_for_user_input(
-            'Mark (R)ead, Mark (U)nread, R(e)ply, (S)kip:',
+            'Mark (R)ead or (U)nread, R(e)ply, (S)kip:',
             ('R', 'U', 'E', 'S')
         )
 
