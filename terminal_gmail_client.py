@@ -244,6 +244,10 @@ def ask_for_integer_input(prompt: str, maximum: int, minimum: int = 0, maximum_o
         return user_input
         
 def date_input(yes_no_prompt: str) -> Optional[datetime.date]:
+    """
+        Asks the user if they want to input a date and, if so, accepts the date as three separate integers and converts it to a datetime.date object.
+    """
+    
     user_wants_to_input_date = ask_for_user_input(yes_no_prompt, ('Y', 'N'))
     
     if user_wants_to_input_date == 'N':
@@ -510,6 +514,11 @@ def display_if_image(image_file_path) -> None:
         pass
         
 def display_first_image_attachment_you_can_find(attachments) -> Optional[str]:
+    """
+        Displays the first image found in the attachments.
+        This is used when a malformed image tag is found in the message text.
+    """
+    
     for attachment in attachments:
         if is_attachment_an_image(attachment):
             return display_attachment(attachment)
@@ -545,13 +554,25 @@ def display_attachment(attachment, downloaded_attachment_location_map=None) -> s
     return filepath
     
 def read_new_messages() -> None:
+    """
+        Read messages that have not been read yet.
+    """
+    
     return read_messages(gmail_client.get_messages(seen=False))
     
 def mark_read(message: google_workspace.gmail.message.Message) -> None:
+    """
+        Marks message as read if it is currently marked as unread.
+    """
+    
     if not message.is_seen:
         message.mark_read()
         
 def mark_unread(message: google_workspace.gmail.message.Message) -> None:
+    """
+        Marks message as unread if it is currently marked as read.
+    """
+    
     if message.is_seen:
         message.mark_unread()
 
@@ -829,6 +850,10 @@ def write_email() -> None:
     )
     
 def search_for_emails() -> None:
+    """
+        Searches for messages based on user criteria.
+    """
+    
     from_ = accept_any_input_blank_is_none('From:')
     
     to = accept_any_input_blank_is_none('To (comma seperated):')
