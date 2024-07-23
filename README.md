@@ -27,6 +27,7 @@ Features:
  Then, source the virtual env.\
  Next, install requirements with ```pip3 install -r requirements.txt```\
  Then, install viu using cargo with the instructions from https://github.com/atanunq/viu \
+ Next, install w3m. On Debian based distributions, you might use this command: ```sudo apt install w3m```\
  Now you need to get a client secret file from https://console.developers.google.com/ and save it as client_secret.json\
  Also, please enable reading emails, marking them as read, and sending emails in the Google API.\
  Finally, run the program with ```python3 terminal_gmail_client.py```\

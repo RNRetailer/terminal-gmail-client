@@ -15,6 +15,9 @@ import shutil
 import io
 import datetime
 from typing import Optional
+import base64
+import requests
+from bs4 import BeautifulSoup
 
 ##############################################################################################################################################
 
@@ -24,6 +27,7 @@ from typing import Optional
 MAXIMUM_RETURNED_EMAILS_FROM_SEARCH = 1000
 
 # set terminal size
+SHOULD_SET_TERMINAL_SIZE = False
 TERMINAL_ROWS = 32
 TERMINAL_COLS = 64
 
@@ -36,7 +40,8 @@ LONG_PRINTED_STRING_MINIMUM_LENGTH = 5000
 ERROR_INVALID_NAME = 123
 
 # set terminal size
-print('\x1b[8;{0};{1}t'.format(TERMINAL_ROWS, TERMINAL_COLS), end='', flush=True)
+if SHOULD_SET_TERMINAL_SIZE and TERMINAL_ROWS and TERMINAL_COLS:
+    print('\x1b[8;{0};{1}t'.format(TERMINAL_ROWS, TERMINAL_COLS), end='', flush=True)
 
 EMAIL_VALIDATION_REGEX = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
 
@@ -455,6 +460,7 @@ textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
 is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
 inline_image_regex_gmail = re.compile(r"\[?image: .*\]?")
 inline_image_regex_outlook = re.compile(r"\[?cid:.*\]?")
+html_img_tag_regex = re.compile(r'<img[^>]*src="([^"]+)"[^>]*>')
 
 def make_sure_images_are_on_seperate_lines(message_content) -> str:
     """
@@ -470,6 +476,86 @@ def make_sure_images_are_on_seperate_lines(message_content) -> str:
             message_content = message_content.replace(image_tag, f'\n[{image_tag}]\n')
             
     return message_content
+
+def display_html_email(message, downloaded_attachment_location_map, seperator='~$%$~[[', sentinel='*&^%$#@!'):
+    html = message.html
+    image_tag_indexes = [(i.start(), i.end()) for i in re.finditer(html_img_tag_regex, html)]
+    images = []
+    attachment_filepaths = set()
+    sentinel_prefix_length = len(sentinel) + 1
+
+    for (start, end) in image_tag_indexes:
+        image_tag = message.html[start: end]
+
+        try:
+            image_index = images.index(image_tag)
+        except ValueError:
+            image_index = len(images)
+            images.append(image_tag)
+
+        html = html.replace(image_tag, f'{seperator}{sentinel}-{image_index}{seperator}')
+
+    for index, image in enumerate(images):
+        soup = BeautifulSoup(image, 'html.parser')
+        img_src = soup.find_all('img')[0]['src']
+
+        if img_src.startswith('cid'):
+            cid = ':'.join(img_src.split(':')[1:]).strip()
+            filename, filepath = download_attachment(cid, message.attachments, use_cid=True)
+
+            if filename and filepath:
+                downloaded_attachment_location_map[filename] = filepath
+                attachment_filepaths.add(filepath)
+            
+            images[index] = filepath
+                
+        elif img_src.startswith('data:'):
+            # base64 encoded: decode and save as file
+
+            base_64_string = img_src.split(',')[1:].strip()
+            decoded_img_data = base64.b64decode(base_64_string)
+            filepath = str(uuid.uuid4())
+
+            with open(filepath, 'wb') as f:
+                f.write(decoded_img_data)
+
+            images[index] = filepath
+        else:
+            # probably points to URL
+            r = requests.get(img_src, allow_redirects=True)
+            filepath = str(uuid.uuid4())
+
+            with open(filepath, 'wb') as f:
+                f.write(r.content)
+
+            images[index] = filepath
+
+    temp_html_filepath = 'temp_html.html'
+
+    for html_chunk in html.split(seperator):
+        if html_chunk.startswith(sentinel):
+            image_index = int(html_chunk[sentinel_prefix_length:])
+
+            image_to_display = images[image_index]
+            
+            if not image_to_display:
+                continue
+
+            if image_to_display.startswith('cid'):
+                display_inline_image(image_to_display[5:], message.attachments, use_cid=True)
+            else:
+                display_if_image(image_to_display)
+        else:
+            with open(temp_html_filepath, 'w') as f:
+                f.write(html_chunk)
+                f.flush()
+
+            subprocess.run(['w3m', '-dump', temp_html_filepath])
+
+    for image in (set(images) - attachment_filepaths):
+        os.remove(image)
+
+    os.remove(temp_html_filepath)
 
 def is_filename_an_image(attachment_file_path) -> bool:
     """
@@ -539,6 +625,32 @@ def display_inline_image(attachment_identifier, attachments, use_cid=False) -> O
                 
     return display_first_image_attachment_you_can_find(attachments)
 
+def download_attachment(attachment_identifier, attachments, use_cid=False) -> tuple:
+    """
+        Download an attachment and return the filepath
+    """
+
+    matched_attachment = None
+
+    if use_cid:
+        for attachment in attachments:
+            if attachment.content_id[1:-1] == attachment_identifier:
+                matched_attachment = attachment
+                break
+    else:
+        for attachment in attachments:
+            if attachment.filename == attachment_identifier:
+                matched_attachment = attachment
+                break
+
+    if matched_attachment:
+        filepath = str(uuid.uuid4())
+        attachment.download(filepath)
+
+        return matched_attachment.filename, filepath
+    else:
+        return None, None
+
 def display_attachment(attachment, downloaded_attachment_location_map=None) -> str:
     """
         Prints an image to the terminal identified by an inline image tag in the email.
@@ -602,50 +714,55 @@ def read_messages(messages) -> None:
 
         # read the email
         if user_input_validated == 'P':
-        
-            # get email text
-            message_text = message.text if message.text else message.html_text
-            
-            message_length = len(message_text)
-            
-            # if email is long, ask user how many characters they want to see
-            if message_length >= LONG_PRINTED_STRING_MINIMUM_LENGTH:
-                length_to_print = ask_for_integer_input(
-                    f'This message is long at {message_length} characters. It might be a long reply chain. How many characters do you want to see (taken from the beginning)? Press enter to see them all.',
-                    message_length
-                )
+
+            #import pdb; pdb.set_trace()
+
+            if message.html:
+                display_html_email(message, downloaded_attachment_location_map)
             else:
-                length_to_print = message_length
-
-            # print the email to the terminal
-            text_to_print = make_sure_images_are_on_seperate_lines(message_text[:length_to_print])
-
-            for line in text_to_print.split('\n'):
-                if inline_image_regex_gmail.findall(line):
-                    if 'cid:' in line:
-                        # [image: cid:FILENAME@hash]
-                    
-                        last_at_sign = line.rfind('@')
-                        attachment_filename = line[12: last_at_sign]
-                    else:
-                        # [image: FILENAME]
-                        attachment_filename = line[8:-1]
-                        
-                    temp_filename = display_inline_image(attachment_filename, message.attachments)
-                    
-                    if temp_filename:
-                        downloaded_attachment_location_map[attachment_filename] = temp_filename
-                        
-                elif inline_image_regex_outlook.findall(line):
-                    # [cid:FILENAME]
-                    attachment_filename = line[5:-1]
-                    temp_filename = display_inline_image(attachment_filename, message.attachments, use_cid=True)
-                    
-                    if temp_filename:
-                        downloaded_attachment_location_map[attachment_filename] = temp_filename
-                else:
-                    print(line)
+                # get email text
+                message_text = message.text
                 
+                message_length = len(message_text)
+                
+                # if email is long, ask user how many characters they want to see
+                if message_length >= LONG_PRINTED_STRING_MINIMUM_LENGTH:
+                    length_to_print = ask_for_integer_input(
+                        f'This message is long at {message_length} characters. It might be a long reply chain. How many characters do you want to see (taken from the beginning)? Press enter to see them all.',
+                        message_length
+                    )
+                else:
+                    length_to_print = message_length
+
+                # print the email to the terminal
+                text_to_print = make_sure_images_are_on_seperate_lines(message_text[:length_to_print])
+
+                for line in text_to_print.split('\n'):
+                    if inline_image_regex_gmail.findall(line):
+                        if 'cid:' in line:
+                            # [image: cid:FILENAME@hash]
+                        
+                            last_at_sign = line.rfind('@')
+                            attachment_filename = line[12: last_at_sign]
+                        else:
+                            # [image: FILENAME]
+                            attachment_filename = line[8:-1]
+                            
+                        temp_filename = display_inline_image(attachment_filename, message.attachments)
+                        
+                        if temp_filename:
+                            downloaded_attachment_location_map[attachment_filename] = temp_filename
+                            
+                    elif inline_image_regex_outlook.findall(line):
+                        # [cid:FILENAME]
+                        attachment_filename = line[5:-1]
+                        temp_filename = display_inline_image(attachment_filename, message.attachments, use_cid=True)
+                        
+                        if temp_filename:
+                            downloaded_attachment_location_map[attachment_filename] = temp_filename
+                    else:
+                        print(line)
+                    
             # react to email attachments
             if len(message.attachments):
                 print('---- Attachments ----')

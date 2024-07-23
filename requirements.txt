@@ -1,3 +1,5 @@
+beautifulsoup4==4.12.3
+bs4==0.0.2
 cachetools==5.3.3
 certifi==2024.7.4
 chardet==5.2.0
@@ -23,6 +25,7 @@ python-magic==0.4.27
 requests==2.32.3
 requests-oauthlib==2.0.0
 rsa==4.9
+soupsieve==2.5
 termcolor==2.4.0
 trython==3.3.1
 typing_extensions==4.12.2
