@@ -638,7 +638,7 @@ def display_if_image(image_file_path) -> bool:
 
     return True
         
-def display_first_image_attachment_you_can_find(attachments) -> Optional[str]:
+def display_first_image_attachment_you_can_find(attachments) -> tuple:
     """
         Displays the first image found in the attachments.
         This is used when a malformed image tag is found in the message text.
@@ -647,8 +647,10 @@ def display_first_image_attachment_you_can_find(attachments) -> Optional[str]:
     for attachment in attachments:
         if is_attachment_an_image(attachment):
             return display_attachment(attachment)
+            
+    return None, None
         
-def display_inline_image(attachment_identifier, attachments, use_cid=False) -> Optional[str]:
+def display_inline_image(attachment_identifier, attachments, use_cid=False) -> tuple:
     """
         Prints an image to the terminal identified by an inline image tag in the email.
     """
