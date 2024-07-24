@@ -620,7 +620,7 @@ def is_attachment_an_image(attachment) -> bool:
     except UnidentifiedImageError:
         return False
     
-def display_if_image(image_file_path) -> None:
+def display_if_image(image_file_path) -> bool:
     """
         Prints a file to the terminal if it is an image.
     """
@@ -690,7 +690,7 @@ def download_attachment(attachment_identifier, attachments, use_cid=False) -> tu
     else:
         return None, None
 
-def display_attachment(attachment, downloaded_attachment_location_map=None) -> str:
+def display_attachment(attachment, downloaded_attachment_location_map=None) -> tuple:
     """
         Prints an image to the terminal identified by an inline image tag in the email.
     """
