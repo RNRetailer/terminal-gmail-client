@@ -27,7 +27,7 @@ Features:
  Then, install viu using cargo with the instructions from https://github.com/atanunq/viu \
  Next, install w3m. On Debian based distributions, you might use this command: ```sudo apt install w3m```\
  Now you need to get a client secret file from https://console.developers.google.com/ and save it as client_secret.json\
- Also, please enable reading emails, marking them as read, and sending emails in the Google API.\
+ Also, please enable reading emails, marking them as read / unread, and sending emails in the Google API.\
  Finally, run the program with ```python3 terminal_gmail_client.py```\
  The program will open a web browser for you to authorize the oauth authentication with Gmail if you are not already authorized.\
  Then, just follow the instructions in the terminal.\
