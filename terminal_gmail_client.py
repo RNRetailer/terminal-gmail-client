@@ -481,8 +481,10 @@ def display_html_email(message, downloaded_attachment_location_map, seperator='~
     html = message.html
     image_tag_indexes = [(i.start(), i.end()) for i in re.finditer(html_img_tag_regex, html)]
     images = []
+    cid_indexes = []
     attachment_filepaths = set()
     sentinel_prefix_length = len(sentinel) + 1
+    ask_to_save_inline_images = False
 
     for (start, end) in image_tag_indexes:
         image_tag = message.html[start: end]
@@ -508,6 +510,7 @@ def display_html_email(message, downloaded_attachment_location_map, seperator='~
                 attachment_filepaths.add(filepath)
             
             images[index] = filepath
+            cid_indexes.append(index)
                 
         elif img_src.startswith('data:'):
             # base64 encoded: decode and save as file
@@ -541,10 +544,10 @@ def display_html_email(message, downloaded_attachment_location_map, seperator='~
             if not image_to_display:
                 continue
 
-            if image_to_display.startswith('cid'):
-                display_inline_image(image_to_display[5:], message.attachments, use_cid=True)
-            else:
-                display_if_image(image_to_display)
+            is_image = display_if_image(image_to_display)
+
+            if is_image and (image_index not in cid_indexes):
+                ask_to_save_inline_images = True
         else:
             with open(temp_html_filepath, 'w') as f:
                 f.write(html_chunk)
@@ -552,8 +555,34 @@ def display_html_email(message, downloaded_attachment_location_map, seperator='~
 
             subprocess.run(['w3m', '-dump', temp_html_filepath])
 
-    for image in (set(images) - attachment_filepaths):
-        os.remove(image)
+    inline_images = [image for image in (set(images) - attachment_filepaths) if image]
+
+    if ask_to_save_inline_images:
+        should_download_inline_images = ask_for_user_input('Do you want to download inline images? (Y or N)', ('Y', 'N'))
+
+        if should_download_inline_images == 'Y':
+            for index, image in enumerate(inline_images):
+                if not display_if_image(image):
+                    os.remove(image)
+                    continue
+
+                should_download = ask_for_user_input(f'Do you want to (D)ownload or (S)kip the above image?', ('D', 'S'))
+
+                default_download_location = f'inline-image-{index}'
+
+                # download attachment
+                if should_download == 'D':
+                    requested_filepath = get_valid_filepath(f'Please enter the path you want to download this file to. Press Enter for {default_download_location}')
+
+                    requested_filepath = requested_filepath if requested_filepath else default_download_location
+
+                    shutil.move(image, requested_filepath)
+                else:
+                    os.remove(image)
+
+        else:
+            for image in inline_images:
+                os.remove(image)
 
     os.remove(temp_html_filepath)
 
@@ -597,7 +626,7 @@ def display_if_image(image_file_path) -> None:
     """
     
     if not is_filename_an_image(image_file_path):
-        return
+        return False
         
     try:
         subprocess.call(
@@ -606,6 +635,8 @@ def display_if_image(image_file_path) -> None:
         )
     except KeyboardInterrupt:
         pass
+
+    return True
         
 def display_first_image_attachment_you_can_find(attachments) -> Optional[str]:
     """
@@ -670,8 +701,7 @@ def display_attachment(attachment, downloaded_attachment_location_map=None) -> s
         filepath = str(uuid.uuid4())
         attachment.download(filepath)
 
-    display_if_image(filepath)
-    return filepath
+    return filepath, display_if_image(filepath)
     
 def read_new_messages() -> None:
     """
@@ -722,9 +752,6 @@ def read_messages(messages) -> None:
 
         # read the email
         if user_input_validated == 'P':
-
-            #import pdb; pdb.set_trace()
-
             if message.html:
                 display_html_email(message, downloaded_attachment_location_map)
             else:
@@ -756,7 +783,7 @@ def read_messages(messages) -> None:
                             # [image: FILENAME]
                             attachment_filename = line[8:-1]
                             
-                        temp_filename = display_inline_image(attachment_filename, message.attachments)
+                        temp_filename, is_image = display_inline_image(attachment_filename, message.attachments)
                         
                         if temp_filename:
                             downloaded_attachment_location_map[attachment_filename] = temp_filename
@@ -764,7 +791,7 @@ def read_messages(messages) -> None:
                     elif inline_image_regex_outlook.findall(line):
                         # [cid:FILENAME]
                         attachment_filename = line[5:-1]
-                        temp_filename = display_inline_image(attachment_filename, message.attachments, use_cid=True)
+                        temp_filename, is_image = display_inline_image(attachment_filename, message.attachments, use_cid=True)
                         
                         if temp_filename:
                             downloaded_attachment_location_map[attachment_filename] = temp_filename
@@ -813,7 +840,7 @@ def read_messages(messages) -> None:
                     # print attachment
                     if should_display == 'P':
                         if attachment_is_image:
-                            downloaded_attachment_location_map[filename] = display_attachment(attachment, downloaded_attachment_location_map)
+                            downloaded_attachment_location_map[filename], _ = display_attachment(attachment, downloaded_attachment_location_map)
                         else:
                             attachment_content = content.decode('utf8')
 
