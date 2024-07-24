@@ -27,7 +27,6 @@ from bs4 import BeautifulSoup
 MAXIMUM_RETURNED_EMAILS_FROM_SEARCH = 1000
 
 # set terminal size
-SHOULD_SET_TERMINAL_SIZE = False
 TERMINAL_ROWS = 32
 TERMINAL_COLS = 64
 
@@ -40,8 +39,7 @@ LONG_PRINTED_STRING_MINIMUM_LENGTH = 5000
 ERROR_INVALID_NAME = 123
 
 # set terminal size
-if SHOULD_SET_TERMINAL_SIZE and TERMINAL_ROWS and TERMINAL_COLS:
-    print('\x1b[8;{0};{1}t'.format(TERMINAL_ROWS, TERMINAL_COLS), end='', flush=True)
+#print('\x1b[8;{0};{1}t'.format(TERMINAL_ROWS, TERMINAL_COLS), end='', flush=True)
 
 EMAIL_VALIDATION_REGEX = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
 
@@ -503,12 +501,9 @@ def display_html_email(message, downloaded_attachment_location_map, seperator='~
             cid = ':'.join(img_src.split(':')[1:]).strip()
             filename, filepath = download_attachment(cid, message.attachments, use_cid=True)
 
-            if filename and filepath:
-                downloaded_attachment_location_map[filename] = filepath
-                attachment_filepaths.add(filepath)
-            
+            downloaded_attachment_location_map[filename] = filepath
             images[index] = filepath
-                
+            attachment_filepaths.add(filepath)
         elif img_src.startswith('data:'):
             # base64 encoded: decode and save as file
 
@@ -537,9 +532,6 @@ def display_html_email(message, downloaded_attachment_location_map, seperator='~
             image_index = int(html_chunk[sentinel_prefix_length:])
 
             image_to_display = images[image_index]
-            
-            if not image_to_display:
-                continue
 
             if image_to_display.startswith('cid'):
                 display_inline_image(image_to_display[5:], message.attachments, use_cid=True)
@@ -595,7 +587,7 @@ def display_if_image(image_file_path) -> None:
     """
         Prints a file to the terminal if it is an image.
     """
-    
+
     if not is_filename_an_image(image_file_path):
         return
         
@@ -633,7 +625,7 @@ def display_inline_image(attachment_identifier, attachments, use_cid=False) -> O
                 
     return display_first_image_attachment_you_can_find(attachments)
 
-def download_attachment(attachment_identifier, attachments, use_cid=False) -> tuple:
+def download_attachment(attachment_identifier, attachments, use_cid=False) -> Optional[str]:
     """
         Download an attachment and return the filepath
     """
@@ -651,13 +643,10 @@ def download_attachment(attachment_identifier, attachments, use_cid=False) -> tu
                 matched_attachment = attachment
                 break
 
-    if matched_attachment:
-        filepath = str(uuid.uuid4())
-        attachment.download(filepath)
+    filepath = str(uuid.uuid4())
+    attachment.download(filepath)
 
-        return matched_attachment.filename, filepath
-    else:
-        return None, None
+    return matched_attachment.filename, filepath
 
 def display_attachment(attachment, downloaded_attachment_location_map=None) -> str:
     """
@@ -722,9 +711,6 @@ def read_messages(messages) -> None:
 
         # read the email
         if user_input_validated == 'P':
-
-            #import pdb; pdb.set_trace()
-
             if message.html:
                 display_html_email(message, downloaded_attachment_location_map)
             else:
