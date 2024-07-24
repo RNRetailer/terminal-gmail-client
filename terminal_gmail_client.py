@@ -477,7 +477,11 @@ def make_sure_images_are_on_seperate_lines(message_content) -> str:
             
     return message_content
 
-def display_html_email(message, downloaded_attachment_location_map, seperator='~$%$~[[', sentinel='*&^%$#@!'):
+def display_html_email(message, downloaded_attachment_location_map, seperator='~$%$~[[', sentinel='*&^%$#@!') -> None:
+    """
+        Prints HTML email and optionally downloads inline images
+    """
+    
     html = message.html
     image_tag_indexes = [(i.start(), i.end()) for i in re.finditer(html_img_tag_regex, html)]
     images = []
