@@ -4,8 +4,6 @@ Access GMail in the Linux terminal easily and safely!
 
 Boasting an extremely simple and streamlined user interface and every feature a normal email user would ever need, Terminal Webmail is your solution to the laggy browser based experience that we've been taught to accept.
 
-If you buy this SKU, you can use the program with as many email addresses as you'd like.
-
 Features:
 
 - Print email in terminal including inline images and gifs
