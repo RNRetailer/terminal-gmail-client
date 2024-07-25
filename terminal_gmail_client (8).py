@@ -480,11 +480,7 @@ def make_sure_images_are_on_seperate_lines(message_content) -> str:
             
     return message_content
 
-def display_html_email(message, downloaded_attachment_location_map, seperator='~$%$~[[', sentinel='*&^%$#@!') -> None:
-    """
-        Prints HTML email and optionally downloads inline images
-    """
-    
+def display_html_email(message, downloaded_attachment_location_map, seperator='~$%$~[[', sentinel='*&^%$#@!'):
     html = message.html
     image_tag_indexes = [(i.start(), i.end()) for i in re.finditer(html_img_tag_regex, html)]
     images = []
@@ -627,7 +623,7 @@ def is_attachment_an_image(attachment) -> bool:
     except UnidentifiedImageError:
         return False
     
-def display_if_image(image_file_path) -> bool:
+def display_if_image(image_file_path) -> None:
     """
         Prints a file to the terminal if it is an image.
     """
@@ -645,7 +641,7 @@ def display_if_image(image_file_path) -> bool:
 
     return True
         
-def display_first_image_attachment_you_can_find(attachments) -> tuple:
+def display_first_image_attachment_you_can_find(attachments) -> Optional[str]:
     """
         Displays the first image found in the attachments.
         This is used when a malformed image tag is found in the message text.
@@ -654,10 +650,8 @@ def display_first_image_attachment_you_can_find(attachments) -> tuple:
     for attachment in attachments:
         if is_attachment_an_image(attachment):
             return display_attachment(attachment)
-            
-    return None, None
         
-def display_inline_image(attachment_identifier, attachments, use_cid=False) -> tuple:
+def display_inline_image(attachment_identifier, attachments, use_cid=False) -> Optional[str]:
     """
         Prints an image to the terminal identified by an inline image tag in the email.
     """
@@ -699,7 +693,7 @@ def download_attachment(attachment_identifier, attachments, use_cid=False) -> tu
     else:
         return None, None
 
-def display_attachment(attachment, downloaded_attachment_location_map=None) -> tuple:
+def display_attachment(attachment, downloaded_attachment_location_map=None) -> str:
     """
         Prints an image to the terminal identified by an inline image tag in the email.
     """
@@ -762,7 +756,7 @@ def read_messages(messages) -> None:
         # read the email
         if user_input_validated == 'P':
             print(print_line_seperator)
-            
+
             if message.html:
                 display_html_email(message, downloaded_attachment_location_map)
             else:
