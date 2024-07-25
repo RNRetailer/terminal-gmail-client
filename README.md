@@ -37,8 +37,9 @@ Features:
  Check out our paid edition here: https://terminalwebmail.com/
  
  # usage notes
-  Animated .gif images will loop infinitely until you end the animation with Control + C. This includes .gif inline images and attachments.
-
+  Animated .gif images will loop infinitely until you end the animation with Control + C.\
+  This includes .gif inline images and attachments.
+  
  # screenshots
 ![1](https://github.com/user-attachments/assets/198d4bbd-8c6d-4925-acae-87d7b7e64df8)
 ![2](https://github.com/user-attachments/assets/08401dff-6355-48b4-b97e-6bfdbe9bc2c7)
