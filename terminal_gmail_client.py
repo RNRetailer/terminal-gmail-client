@@ -18,13 +18,15 @@ from typing import Optional
 import base64
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse
+import urllib3
 
 ##############################################################################################################################################
 
 # CONFIG
 
 # email options
-MAXIMUM_RETURNED_EMAILS_FROM_SEARCH = 1000
+MAXIMUM_RETURNED_EMAILS_FROM_SEARCH = 10
 
 # set terminal size
 SHOULD_SET_TERMINAL_SIZE = False
@@ -492,6 +494,7 @@ def display_html_email(message, downloaded_attachment_location_map, seperator='~
     attachment_filepaths = set()
     sentinel_prefix_length = len(sentinel) + 1
     ask_to_save_inline_images = False
+    last_domain_accessed = ''
 
     for (start, end) in image_tag_indexes:
         image_tag = message.html[start: end]
@@ -532,13 +535,24 @@ def display_html_email(message, downloaded_attachment_location_map, seperator='~
             images[index] = filepath
         else:
             # probably points to URL
-            r = requests.get(img_src, allow_redirects=True)
-            filepath = str(uuid.uuid4())
 
-            with open(filepath, 'wb') as f:
-                f.write(r.content)
+            domain = urlparse(img_src).netloc
 
-            images[index] = filepath
+            if domain:
+                last_domain_accessed = domain
+            else:
+                img_src = f'https://{last_domain_accessed}{img_src}'
+
+            try:
+                r = requests.get(img_src, allow_redirects=True)
+                filepath = str(uuid.uuid4())
+
+                with open(filepath, 'wb') as f:
+                    f.write(r.content)
+
+                images[index] = filepath
+            except (requests.exceptions.InvalidURL, requests.exceptions.ConnectionError, urllib3.exceptions.MaxRetryError, urllib3.exceptions.NameResolutionError):
+                images[index] = None
 
     temp_html_filepath = 'temp_html.html'
 
@@ -560,7 +574,7 @@ def display_html_email(message, downloaded_attachment_location_map, seperator='~
                 f.write(html_chunk)
                 f.flush()
 
-            subprocess.run(['w3m', '-dump', temp_html_filepath])
+            subprocess.run(['w3m', '-dump', '-o', 'color=true', temp_html_filepath])
 
     inline_images = [image for image in (set(images) - attachment_filepaths) if image]
 
@@ -716,8 +730,16 @@ def read_new_messages() -> None:
     """
         Read messages that have not been read yet.
     """
-    
-    return read_messages(gmail_client.get_messages(seen=False))
+   
+    message_ids_encountered = set()
+
+    while True:
+        message_ids_encountered_this_batch = read_messages(gmail_client.get_messages(seen=False, limit=MAXIMUM_RETURNED_EMAILS_FROM_SEARCH), message_ids_encountered)
+
+        if not message_ids_encountered_this_batch:
+            return
+
+        message_ids_encountered = message_ids_encountered.union(set(message_ids_encountered_this_batch))
     
 def mark_read(message: google_workspace.gmail.message.Message) -> None:
     """
@@ -735,12 +757,21 @@ def mark_unread(message: google_workspace.gmail.message.Message) -> None:
     if message.is_seen:
         message.mark_unread()
 
-def read_messages(messages) -> None:
+def read_messages(messages, message_ids_encountered: Iterable = tuple()) -> list:
     """
         Get all unread messages from GMail and allow the user to read the message content, mark the message as read, and send threaded reply emails.
     """
 
+    message_ids_processed = []
+
     for message in messages:
+        message_gmail_id = message.gmail_id
+
+        if message_gmail_id in message_ids_encountered:
+            continue
+
+        message_ids_processed.append(message_gmail_id)
+
         # print email header
         
         print(print_line_seperator)
@@ -811,7 +842,7 @@ def read_messages(messages) -> None:
                     
             # react to email attachments
             if len(message.attachments):
-                print('---- Attachments ----')
+                print('\n---- Attachments ----')
                 
                 files_to_keep = []
 
@@ -821,13 +852,13 @@ def read_messages(messages) -> None:
                     
                     one_index = index + 1
                     
-                    should_download = ask_for_user_input(f'Do you want to (D)ownload or (S)kip attachment #{one_index} with filename "{filename}"', ('D', 'S'))
+                    should_download = ask_for_user_input(f'\nDo you want to (D)ownload or (S)kip attachment #{one_index} with filename "{filename}"', ('D', 'S'))
 
                     default_download_location = filename if filename else f'attachment-{index}'
                     
                     # download attachment
                     if should_download == 'D':
-                        requested_filepath = get_valid_filepath(f'Please enter the path you want to download this file to. Press Enter for {default_download_location}')
+                        requested_filepath = get_valid_filepath(f'\nPlease enter the path you want to download this file to. Press Enter for {default_download_location}')
 
                         requested_filepath = requested_filepath if requested_filepath else default_download_location
 
@@ -843,10 +874,10 @@ def read_messages(messages) -> None:
                     attachment_is_image = is_attachment_an_image(attachment)
 
                     if is_binary_string(content) and not attachment_is_image:
-                        print(f'Can\'t print attachment #{one_index} with filename "{filename}" because it is a binary file')
+                        print(f'\nCan\'t print attachment #{one_index} with filename "{filename}" because it is a binary file')
                         continue
                         
-                    should_display = ask_for_user_input(f'Do you want to (P)rint or (S)kip attachment #{one_index} with filename "{filename}"', ('P', 'S'))
+                    should_display = ask_for_user_input(f'\nDo you want to (P)rint or (S)kip attachment #{one_index} with filename "{filename}"', ('P', 'S'))
                         
                     # print attachment
                     if should_display == 'P':
@@ -865,7 +896,7 @@ def read_messages(messages) -> None:
                             else:
                                 length_to_print = attachment_length
 
-                            print(f'--- Printing Attachment #{one_index} with filename "{filename}" ---')
+                            print(f'\n--- Printing Attachment #{one_index} with filename "{filename}" ---\n')
 
                             for line in attachment_content[:length_to_print].split('\n'):
                                 print(line)
@@ -890,6 +921,8 @@ def read_messages(messages) -> None:
             continue
             
         # react to the email after reading it
+
+        print('------------------------------------------------------------\n')
 
         user_input_validated = ask_for_user_input(
             'Mark (R)ead or (U)nread, R(e)ply, (S)kip:',
@@ -973,6 +1006,8 @@ def read_messages(messages) -> None:
    
             # mark email as read after you reply to it
             mark_read(message)
+    
+    return message_ids_processed
 
 def write_email() -> None:
     """
