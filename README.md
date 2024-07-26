@@ -12,7 +12,7 @@ Features:
 
 - Download attachments
 
-- Mark email as read
+- Mark email as read / unread
 
 - Reply to email using the default EDITOR on your system
 
@@ -34,7 +34,13 @@ Features:
  You can safely close the terminal window whenver you want.\
  The program will exit once it completes the task you've selected.\
  So, you must run it every time you want to check your unread mail or write an email.\
- Check out our paid edition here: https://terminalwebmail.com/ <br><br>
+ Check out our paid edition here: https://terminalwebmail.com/
+ 
+ # usage notes
+  Animated .gif images will loop infinitely until you end the animation with Control + C.\
+  This includes .gif inline images and attachments.
+  
+ # screenshots
 ![1](https://github.com/user-attachments/assets/198d4bbd-8c6d-4925-acae-87d7b7e64df8)
 ![2](https://github.com/user-attachments/assets/08401dff-6355-48b4-b97e-6bfdbe9bc2c7)
 ![3](https://github.com/user-attachments/assets/5196d1e1-3160-4b1e-8de7-2df3aa40b230)\
