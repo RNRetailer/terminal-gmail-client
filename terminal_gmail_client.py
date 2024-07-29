@@ -756,6 +756,14 @@ def mark_unread(message: google_workspace.gmail.message.Message) -> None:
     
     if message.is_seen:
         message.mark_unread()
+        
+def mark_as_spam(message: google_workspace.gmail.message.Message) -> None:
+    if 'spam' not in message.label_ids:
+        message.add_labels('spam')
+        
+def mark_as_not_spam(message: google_workspace.gmail.message.Message) -> None:
+    if 'spam' in message.label_ids:
+        message.remove_labels('spam')
 
 def read_messages(messages, message_ids_encountered: Iterable = tuple()) -> list:
     """
@@ -784,8 +792,8 @@ def read_messages(messages, message_ids_encountered: Iterable = tuple()) -> list
 
         # ask user how to react to email
         user_input_validated = ask_for_user_input(
-            '(P)rint, Mark (R)ead or (U)nread, (S)kip:',
-            ('P', 'R', 'U', 'S')
+            '(P)rint, Mark (R)ead, (U)nread, Spa(m), or (N)ot Spam, (S)kip:',
+            ('P', 'R', 'U', 'M', 'N', 'S')
         )
 
         downloaded_attachment_location_map = {}
@@ -914,19 +922,30 @@ def read_messages(messages, message_ids_encountered: Iterable = tuple()) -> list
         # mark the email as unread
         elif user_input_validated == 'U':
             mark_unread(message)
-            continue       
+            continue
+            
+        # mark the email as spam
+        elif user_input_validated == 'M':
+            mark_as_spam(message)
+            continue
+            
+        # mark the email as not spam
+        elif user_input_validated == 'N':
+            mark_as_not_spam(message)
+            continue
 
         # skip the email
         elif user_input_validated == 'S':
             continue
+            
             
         # react to the email after reading it
 
         print('------------------------------------------------------------\n')
 
         user_input_validated = ask_for_user_input(
-            'Mark (R)ead or (U)nread, R(e)ply, (S)kip:',
-            ('R', 'U', 'E', 'S')
+            'Mark (R)ead or (U)nread, Spa(m) or (N)ot Spam, R(e)ply, (S)kip:',
+            ('R', 'U', 'M', 'N', 'E', 'S')
         )
 
         # mark email as read
@@ -936,6 +955,14 @@ def read_messages(messages, message_ids_encountered: Iterable = tuple()) -> list
         # mark the email as unread
         elif user_input_validated == 'U':
             mark_unread(message) 
+            
+        # mark the email as spam
+        elif user_input_validated == 'M':
+            mark_as_spam(message)
+            
+        # mark the email as not spam
+        elif user_input_validated == 'N':
+            mark_as_not_spam(message)
 
         # reply to email
         elif user_input_validated == 'E':
