@@ -758,11 +758,11 @@ def mark_unread(message: google_workspace.gmail.message.Message) -> None:
         message.mark_unread()
         
 def mark_as_spam(message: google_workspace.gmail.message.Message) -> None:
-    if 'spam' not in message.label_ids:
+    if 'SPAM' not in message.label_ids:
         message.add_labels('spam')
         
 def mark_as_not_spam(message: google_workspace.gmail.message.Message) -> None:
-    if 'spam' in message.label_ids:
+    if 'SPAM' in message.label_ids:
         message.remove_labels('spam')
 
 def read_messages(messages, message_ids_encountered: Iterable = tuple()) -> list:
