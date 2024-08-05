@@ -12,7 +12,7 @@ Features:
 
 - Download attachments
 
-- Mark email as read / unread
+- Mark email as read / unread or spam / not spam
 
 - Reply to email using the default EDITOR on your system
 
