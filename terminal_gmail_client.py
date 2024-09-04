@@ -20,6 +20,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import urllib3
+import concurrent.futures
 
 ##############################################################################################################################################
 
@@ -482,6 +483,25 @@ def make_sure_images_are_on_seperate_lines(message_content) -> str:
             
     return message_content
 
+def download_images_in_parallel(indices_and_image_urls, images):
+    def download_image(index_and_image_url):
+        index, img_url = index_and_image_url
+
+        try:
+            r = requests.get(img_url, allow_redirects=True)
+            filepath = str(uuid.uuid4())
+
+            with open(filepath, 'wb') as f:
+                f.write(r.content)
+
+            images[index] = filepath
+        except (requests.exceptions.InvalidURL, requests.exceptions.ConnectionError, urllib3.exceptions.MaxRetryError, urllib3.exceptions.NameResolutionError):
+            images[index] = None
+
+    with concurrent.futures.ThreadPoolExecutor() as exector: 
+        exector.map(download_image, indices_and_image_urls)
+
+
 def display_html_email(message, downloaded_attachment_location_map, seperator='~$%$~[[', sentinel='*&^%$#@!') -> None:
     """
         Prints HTML email and optionally downloads inline images
@@ -491,6 +511,7 @@ def display_html_email(message, downloaded_attachment_location_map, seperator='~
     image_tag_indexes = [(i.start(), i.end()) for i in re.finditer(html_img_tag_regex, html)]
     images = []
     cid_indexes = []
+    indices_and_image_urls = []
     attachment_filepaths = set()
     sentinel_prefix_length = len(sentinel) + 1
     ask_to_save_inline_images = False
@@ -543,16 +564,11 @@ def display_html_email(message, downloaded_attachment_location_map, seperator='~
             else:
                 img_src = f'https://{last_domain_accessed}{img_src}'
 
-            try:
-                r = requests.get(img_src, allow_redirects=True)
-                filepath = str(uuid.uuid4())
-
-                with open(filepath, 'wb') as f:
-                    f.write(r.content)
-
-                images[index] = filepath
-            except (requests.exceptions.InvalidURL, requests.exceptions.ConnectionError, urllib3.exceptions.MaxRetryError, urllib3.exceptions.NameResolutionError):
-                images[index] = None
+            indices_and_image_urls.append(
+                   (index, img_src)
+            )
+   
+    download_images_in_parallel(indices_and_image_urls, images)
 
     temp_html_filepath = 'temp_html.html'
 

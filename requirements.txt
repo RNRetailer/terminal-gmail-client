@@ -25,6 +25,7 @@ python-magic==0.4.27
 requests==2.32.3
 requests-oauthlib==2.0.0
 rsa==4.9
+setuptools==74.1.1
 soupsieve==2.5
 termcolor==2.4.0
 trython==3.3.1
