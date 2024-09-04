@@ -29,7 +29,6 @@ Features:
  Now you need to get a client secret file from https://console.developers.google.com/ and save it as client_secret.json\
  Also, please enable reading emails, marking them as read / unread, and sending emails in the Google API.\
  Finally, run the program with ```python3 terminal_gmail_client.py```\
- If it throws an error regarding distutils, run this command: ```pip3 install setuptools```\
  The program will open a web browser for you to authorize the oauth authentication with Gmail if you are not already authorized.\
  Then, just follow the instructions in the terminal.\
  You can safely close the terminal window whenver you want.\
