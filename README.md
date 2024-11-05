@@ -20,6 +20,8 @@ Features:
 
 - Set to, cc, and bcc for any reply or written email
 
+- Empty Trash
+
 # installation
  First, make a virtual env to put the files from this repo into.\
  Then, source the virtual env.\
