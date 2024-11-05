@@ -756,7 +756,35 @@ def read_new_messages() -> None:
             return
 
         message_ids_encountered = message_ids_encountered.union(set(message_ids_encountered_this_batch))
-    
+
+def empty_trash() -> None:
+    """
+        Deletes all messages from the trash
+    """
+   
+    message_ids_encountered = set()
+    messages_deleted = 0
+
+    while True:
+        messages = gmail_client.get_messages(
+            label_name='trash', 
+            include_spam_and_trash=True, 
+            limit=MAXIMUM_RETURNED_EMAILS_FROM_SEARCH
+        )
+
+        message_ids_encountered_this_batch = delete_messages(messages, message_ids_encountered)
+
+        if not message_ids_encountered_this_batch:
+            return
+
+        messages_deleted += len(message_ids_encountered_this_batch)
+
+        print(f'{messages_deleted} messages deleted')
+
+        message_ids_encountered = message_ids_encountered.union(set(message_ids_encountered_this_batch))
+
+    print('trash emptied')
+
 def mark_read(message: google_workspace.gmail.message.Message) -> None:
     """
         Marks message as read if it is currently marked as unread.
@@ -780,6 +808,26 @@ def mark_as_spam(message: google_workspace.gmail.message.Message) -> None:
 def mark_as_not_spam(message: google_workspace.gmail.message.Message) -> None:
     if 'SPAM' in message.label_ids:
         message.remove_labels('spam')
+
+def delete_messages(messages, message_ids_encountered: Iterable = tuple()) -> list:
+    """
+        Deletes all messages passed to it
+    """
+
+    message_ids_processed = []
+
+    for message in messages:
+        message_gmail_id = message.gmail_id
+
+        if message_gmail_id in message_ids_encountered:
+            continue
+
+        message.delete()
+
+        message_ids_processed.append(message_gmail_id)
+
+    return message_ids_processed
+
 
 def read_messages(messages, message_ids_encountered: Iterable = tuple()) -> list:
     """
@@ -1148,8 +1196,8 @@ if __name__ == "__main__":
 
     # ask user what action they want to take
     operation = ask_for_user_input(
-        '\nDo you want to:\n (R)ead your new emails\n (S)earch for emails\n or (W)rite an email?',
-        ('R', 'S', 'W')
+        '\nDo you want to:\n (R)ead your new emails\n (S)earch for emails\n (W)rite an email?\n or (E)mpty trash?\n',
+        ('R', 'S', 'W', 'E')
     )
 
     # read emails
@@ -1163,3 +1211,8 @@ if __name__ == "__main__":
     # write email
     elif operation == 'W':
         write_email()
+
+    # empty trash
+    elif operation == 'E':
+        empty_trash()
+
