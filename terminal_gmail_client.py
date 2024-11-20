@@ -775,7 +775,7 @@ def empty_trash() -> None:
         message_ids_encountered_this_batch = delete_messages(messages, message_ids_encountered)
 
         if not message_ids_encountered_this_batch:
-            return
+            break
 
         messages_deleted += len(message_ids_encountered_this_batch)
 
